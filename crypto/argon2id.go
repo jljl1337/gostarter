@@ -100,24 +100,24 @@ func (h *Argon2idHasher) Hash(password string) (string, error) {
 func (h *Argon2idHasher) Compare(hash, password string) bool {
 	version, memory, iterations, parallelism, salt, hashBytes, err := h.SplitHash(hash)
 	if err != nil {
-		slog.Debug(fmt.Sprintf("Failed to parse hash: %v", err))
+		slog.Warn(fmt.Sprintf("Failed to parse hash: %v", err))
 		return false
 	}
 
 	if version != argon2.Version {
-		slog.Debug(fmt.Sprintf("Hash version mismatch: expected %d, got %d", argon2.Version, version))
+		slog.Warn(fmt.Sprintf("Hash version mismatch: expected %d, got %d", argon2.Version, version))
 		return false
 	}
 
 	// Decode the base64 encoded salt and hash
 	saltDecoded, err := base64.RawStdEncoding.DecodeString(string(salt))
 	if err != nil {
-		slog.Debug(fmt.Sprintf("Failed to decode salt: %v", err))
+		slog.Warn(fmt.Sprintf("Failed to decode salt: %v", err))
 		return false
 	}
 	hashDecoded, err := base64.RawStdEncoding.DecodeString(string(hashBytes))
 	if err != nil {
-		slog.Debug(fmt.Sprintf("Failed to decode hash: %v", err))
+		slog.Warn(fmt.Sprintf("Failed to decode hash: %v", err))
 		return false
 	}
 
