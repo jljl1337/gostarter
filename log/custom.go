@@ -16,8 +16,14 @@ the environment variables. It uses the slog package to create a new logger with
 a custom handler that formats log messages with a timestamp, log level, and
 message. The log level is set based on the value of env.LogLevel.
 */
-func SetCustomLoggerFromEnv() {
+func SetCustomLoggerFromEnv() error {
+	if !env.ConstantsSet {
+		return fmt.Errorf("environment variables not set, cannot set custom logger")
+	}
+
 	SetCustomLogger(env.LogLevel)
+
+	return nil
 }
 
 /*
