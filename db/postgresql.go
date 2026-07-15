@@ -3,10 +3,10 @@ package db
 import (
 	"fmt"
 
-	"github.com/jljl1337/gostarter/env"
-
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+
+	"github.com/jljl1337/gostarter/env"
 )
 
 /*

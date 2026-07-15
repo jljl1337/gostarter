@@ -3,9 +3,9 @@ package db
 import (
 	"fmt"
 
-	"github.com/jljl1337/gostarter/env"
-
 	"github.com/jmoiron/sqlx"
+
+	"github.com/jljl1337/gostarter/env"
 )
 
 /*
