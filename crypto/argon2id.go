@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/argon2"
 
 	"github.com/jljl1337/gostarter/conversion"
+	"github.com/jljl1337/gostarter/env"
 )
 
 /*
@@ -30,6 +31,18 @@ type Argon2idHasher struct {
 	parallelism uint8
 	saltLength  uint32
 	keyLength   uint32
+}
+
+func NewArgon2idHasherFromEnv() (*Argon2idHasher, error) {
+	params := NewArgon2idHasherParams{
+		Memory:      env.PasswordArgon2idMemory,
+		Iterations:  env.PasswordArgon2idIterations,
+		Parallelism: env.PasswordArgon2idParallelism,
+		SaltLength:  env.PasswordArgon2idSaltLength,
+		KeyLength:   env.PasswordArgon2idKeyLength,
+	}
+
+	return NewArgon2idHasher(params)
 }
 
 func NewArgon2idHasher(params NewArgon2idHasherParams) (*Argon2idHasher, error) {
