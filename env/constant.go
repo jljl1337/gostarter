@@ -37,8 +37,6 @@ var (
 	PreSessionLifetimeMin      int
 	CSRFTokenLength            int
 	CSRFTokenCharset           string
-	PageSizeMax                int
-	PageSizeDefault            int
 
 	// Derived variables
 
@@ -72,8 +70,6 @@ func MustSetConstants() {
 	PreSessionLifetimeMin = MustGetInt("GOSTARTER_PRE_SESSION_LIFETIME_MIN", 15)
 	CSRFTokenLength = MustGetInt("GOSTARTER_CSRF_TOKEN_LENGTH", 32)
 	CSRFTokenCharset = MustGetString("GOSTARTER_CSRF_TOKEN_CHARSET", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	PageSizeMax = MustGetInt("GOSTARTER_PAGE_SIZE_MAX", 100)
-	PageSizeDefault = MustGetInt("GOSTARTER_PAGE_SIZE_DEFAULT", 10)
 
 	switch databaseDriver {
 	case DatabaseDriverPostgreSQL:
