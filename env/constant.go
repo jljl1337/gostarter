@@ -16,8 +16,13 @@ var (
 
 	// Plain variables from environment variables
 
+	DataDir                     string
+	LiveDataDir                 string
+	BackupDataDir               string
+	SQLiteDir                   string
+	LiveSQLiteFileName          string
+	BackupSQLiteFileName        string
 	PostgresURL                 string
-	SQLiteDbPath                string
 	SQLiteDbBusyTimeout         string
 	SQLiteBackupDbPath          string
 	SQLiteBackupCronSchedule    string
@@ -53,11 +58,15 @@ var (
 func MustSetConstants() {
 	MustLoadOptionalEnvFile()
 
+	DataDir = MustGetString("GOSTARTER_DATA_DIR", "data")
+	LiveDataDir = MustGetString("GOSTARTER_LIVE_DATA_DIR", "live")
+	BackupDataDir = MustGetString("GOSTARTER_BACKUP_DATA_DIR", "backup")
+	SQLiteDir = MustGetString("GOSTARTER_SQLITE_DIR", "db")
+	LiveSQLiteFileName = MustGetString("GOSTARTER_LIVE_SQLITE_FILE_NAME", "live.db")
+	BackupSQLiteFileName = MustGetString("GOSTARTER_BACKUP_SQLITE_FILE_NAME", "backup.db")
 	databaseDriver := MustGetString("GOSTARTER_DATABASE_DRIVER", "sqlite")
 	PostgresURL = MustGetString("GOSTARTER_POSTGRES_URL", "")
-	SQLiteDbPath = MustGetString("GOSTARTER_SQLITE_DB_PATH", "data/live/db/live.db")
 	SQLiteDbBusyTimeout = MustGetString("GOSTARTER_SQLITE_BUSY_TIMEOUT", "30000")
-	SQLiteBackupDbPath = MustGetString("GOSTARTER_SQLITE_BACKUP_DB_PATH", "data/backup/db/backup.db")
 	SQLiteBackupCronSchedule = MustGetString("GOSTARTER_SQLITE_BACKUP_CRON_SCHEDULE", "0 0 * * *")
 	SessionCleanupCronSchedule = MustGetString("GOSTARTER_SESSION_CLEANUP_CRON_SCHEDULE", "0 0 * * 0")
 	LogLevel = MustGetInt("GOSTARTER_LOG_LEVEL", 0)
