@@ -14,7 +14,7 @@ type Hasher interface {
 	/*
 	 Compare checks if the provided hash matches the hash of the password string.
 	*/
-	Compare(hash, password string) bool
+	Compare(hash, password string) (bool, error)
 
 	/*
 	 CompareParameters checks if the parameters of the provided hash match

@@ -97,35 +97,34 @@ func (h *Argon2idHasher) Hash(password string) (string, error) {
 	return encoded, nil
 }
 
-func (h *Argon2idHasher) Compare(hash, password string) bool {
+func (h *Argon2idHasher) Compare(hash, password string) (bool, error) {
 	version, memory, iterations, parallelism, salt, hashBytes, err := h.SplitHash(hash)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("Failed to parse hash: %v", err))
-		return false
+		return false, fmt.Errorf("failed to split hash: %w", err)
 	}
 
 	if version != argon2.Version {
 		slog.Warn(fmt.Sprintf("Hash version mismatch: expected %d, got %d", argon2.Version, version))
-		return false
+		return false, fmt.Errorf("version mismatch")
 	}
 
 	// Decode the base64 encoded salt and hash
 	saltDecoded, err := base64.RawStdEncoding.DecodeString(string(salt))
 	if err != nil {
 		slog.Warn(fmt.Sprintf("Failed to decode salt: %v", err))
-		return false
+		return false, fmt.Errorf("failed to decode salt: %w", err)
 	}
 	hashDecoded, err := base64.RawStdEncoding.DecodeString(string(hashBytes))
 	if err != nil {
 		slog.Warn(fmt.Sprintf("Failed to decode hash: %v", err))
-		return false
+		return false, fmt.Errorf("failed to decode hash: %w", err)
 	}
 
 	// Generate a new hash with the same parameters and salt
 	newHash := argon2.IDKey([]byte(password), saltDecoded, iterations, memory, parallelism, uint32(len(hashDecoded)))
 
 	// Compare the newly generated hash with the original hash
-	return subtle.ConstantTimeCompare(newHash, hashDecoded) == 1
+	return subtle.ConstantTimeCompare(newHash, hashDecoded) == 1, nil
 }
 
 func (h *Argon2idHasher) CompareParameters(hash string) (bool, error) {
