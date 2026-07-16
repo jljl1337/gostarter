@@ -76,6 +76,10 @@ func NewArgon2idHasher(params NewArgon2idHasherParams) (*Argon2idHasher, error) 
 	}, nil
 }
 
+func (h *Argon2idHasher) Name() string {
+	return env.PasswordHashingAlgorithmArgon2id
+}
+
 func (h *Argon2idHasher) Hash(password string) (string, error) {
 	// Generate a cryptographically secure random salt
 	salt := make([]byte, h.saltLength)
@@ -95,6 +99,15 @@ func (h *Argon2idHasher) Hash(password string) (string, error) {
 		argon2.Version, h.memory, h.iterations, h.parallelism, b64Salt, b64Hash)
 
 	return encoded, nil
+}
+
+func (h *Argon2idHasher) IsValidHash(hash string) bool {
+	// Check if the hash starts with the expected prefix for Argon2id
+	if len(hash) < 9 || hash[:9] != "$argon2id" {
+		return false
+	}
+
+	return true
 }
 
 func (h *Argon2idHasher) Compare(hash, password string) (bool, error) {
