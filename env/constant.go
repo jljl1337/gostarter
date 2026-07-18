@@ -57,8 +57,8 @@ var (
 
 	// Derived variables
 
-	DatabaseDriver            string
-	SessionCookieSameSiteMode http.SameSite
+	DatabaseDriver        string
+	SessionCookieSameSite http.SameSite
 )
 
 func MustSetConstants() {
@@ -91,7 +91,7 @@ func MustSetConstants() {
 	SessionCookieName = MustGetString("GOSTARTER_SESSION_COOKIE_NAME", "issho_session_token")
 	SessionCookieHttpOnly = MustGetBool("GOSTARTER_SESSION_COOKIE_HTTP_ONLY", true)
 	SessionCookieSecure = MustGetBool("GOSTARTER_SESSION_COOKIE_SECURE", false)
-	sessionCookieSameSite := MustGetString("GOSTARTER_SESSION_COOKIE_SAME_SITE_MODE", "lax")
+	sessionCookieSameSite := MustGetString("GOSTARTER_SESSION_COOKIE_SAME_SITE", "lax")
 	SessionTokenLength = MustGetInt("GOSTARTER_SESSION_TOKEN_LENGTH", 32)
 	SessionTokenCharset = MustGetString("GOSTARTER_SESSION_TOKEN_CHARSET", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	SessionLifetimeMin = MustGetInt("GOSTARTER_SESSION_LIFETIME_MIN", 60*24*7)
@@ -111,13 +111,13 @@ func MustSetConstants() {
 
 	switch sessionCookieSameSite {
 	case "lax":
-		SessionCookieSameSiteMode = http.SameSiteLaxMode
+		SessionCookieSameSite = http.SameSiteLaxMode
 	case "strict":
-		SessionCookieSameSiteMode = http.SameSiteStrictMode
+		SessionCookieSameSite = http.SameSiteStrictMode
 	case "none":
-		SessionCookieSameSiteMode = http.SameSiteNoneMode
+		SessionCookieSameSite = http.SameSiteNoneMode
 	default:
-		SessionCookieSameSiteMode = http.SameSiteNoneMode
+		SessionCookieSameSite = http.SameSiteNoneMode
 	}
 
 	ConstantsSet = true
