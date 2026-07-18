@@ -25,11 +25,13 @@ var (
 	BackupDataDir               string
 	SQLiteDir                   string
 	LiveSQLiteFileName          string
+	EnableSQLiteBackup          bool
 	BackupSQLiteFileName        string
 	PostgresURL                 string
 	SQLiteDbBusyTimeout         string
 	SQLiteBackupDbPath          string
 	SQLiteBackupCronSchedule    string
+	EnableSessionCleanup        bool
 	SessionCleanupCronSchedule  string
 	LogLevel                    int
 	LogHealthCheck              bool
@@ -67,11 +69,13 @@ func MustSetConstants() {
 	BackupDataDir = MustGetString("GOSTARTER_BACKUP_DATA_DIR", "backup")
 	SQLiteDir = MustGetString("GOSTARTER_SQLITE_DIR", "db")
 	LiveSQLiteFileName = MustGetString("GOSTARTER_LIVE_SQLITE_FILE_NAME", "live.db")
+	EnableSQLiteBackup = MustGetBool("GOSTARTER_ENABLE_SQLITE_BACKUP", true)
 	BackupSQLiteFileName = MustGetString("GOSTARTER_BACKUP_SQLITE_FILE_NAME", "backup.db")
 	databaseDriver := MustGetString("GOSTARTER_DATABASE_DRIVER", "sqlite")
 	PostgresURL = MustGetString("GOSTARTER_POSTGRES_URL", "")
 	SQLiteDbBusyTimeout = MustGetString("GOSTARTER_SQLITE_BUSY_TIMEOUT", "30000")
 	SQLiteBackupCronSchedule = MustGetString("GOSTARTER_SQLITE_BACKUP_CRON_SCHEDULE", "0 0 * * *")
+	EnableSessionCleanup = MustGetBool("GOSTARTER_ENABLE_SESSION_CLEANUP", true)
 	SessionCleanupCronSchedule = MustGetString("GOSTARTER_SESSION_CLEANUP_CRON_SCHEDULE", "0 0 * * 0")
 	LogLevel = MustGetInt("GOSTARTER_LOG_LEVEL", 0)
 	LogHealthCheck = MustGetBool("GOSTARTER_LOG_HEALTH_CHECK", false)
