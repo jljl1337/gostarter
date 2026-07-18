@@ -10,6 +10,10 @@ const (
 )
 
 var (
+	// Variables set at build time
+
+	Version = "dev"
+
 	// Internal variables
 
 	ConstantsSet bool = false
