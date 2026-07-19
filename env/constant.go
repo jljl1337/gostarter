@@ -61,7 +61,7 @@ var (
 	SessionCookieSameSite http.SameSite
 )
 
-func MustSetConstants() {
+func MustSetConstants() { // TODO: list of warning
 	MustLoadOptionalEnvFile()
 
 	DataDir = MustGetString("GOSTARTER_DATA_DIR", "data")

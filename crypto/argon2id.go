@@ -141,6 +141,7 @@ func (h *Argon2idHasher) Compare(hash, password string) (bool, error) {
 }
 
 func (h *Argon2idHasher) CompareParameters(hash string) (bool, error) {
+	// TODO: check salt (and hash length?) as well
 	version, memory, iterations, parallelism, _, _, err := h.SplitHash(hash)
 	if err != nil {
 		return false, fmt.Errorf("failed to split hash: %w", err)
