@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"context"
+	"database/sql"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -18,4 +21,8 @@ to execute queries.
 */
 type Queries struct {
 	db sqlx.ExtContext
+}
+
+func (q *Queries) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	return q.db.ExecContext(ctx, query, args...)
 }

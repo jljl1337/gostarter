@@ -7,7 +7,14 @@ import (
 )
 
 const createMigrationTable = `
-	CREATE TABLE IF NOT EXISTS migration (
+	CREATE TABLE IF NOT EXISTS gs_gostarter_migration (
+		id TEXT PRIMARY KEY,
+		up_statement TEXT NOT NULL,
+		down_statement TEXT NOT NULL,
+		executed_at TEXT NOT NULL
+	);
+
+	CREATE TABLE IF NOT EXISTS gs_app_migration (
 		id TEXT PRIMARY KEY,
 		up_statement TEXT NOT NULL,
 		down_statement TEXT NOT NULL,
@@ -20,24 +27,39 @@ func (q *Queries) CreateMigrationTable(ctx context.Context) error {
 	return err
 }
 
-const getAppliedMigrations = `
+const getAppliedGostarterMigrations = `
 	SELECT
 		*
 	FROM
-		migration
+		gs_gostarter_migration
 	ORDER BY
 		id ASC;
 `
 
-func (q *Queries) GetAppliedMigrations(ctx context.Context) ([]Migration, error) {
+func (q *Queries) GetAppliedGostarterMigrations(ctx context.Context) ([]Migration, error) {
 	items := []Migration{}
-	err := sqlx.SelectContext(ctx, q.db, &items, getAppliedMigrations)
+	err := sqlx.SelectContext(ctx, q.db, &items, getAppliedGostarterMigrations)
 	return items, err
 }
 
-const insertMigration = `
+const getAppliedAppMigrations = `
+	SELECT
+		*
+	FROM
+		gs_app_migration
+	ORDER BY
+		id ASC;
+`
+
+func (q *Queries) GetAppliedAppMigrations(ctx context.Context) ([]Migration, error) {
+	items := []Migration{}
+	err := sqlx.SelectContext(ctx, q.db, &items, getAppliedAppMigrations)
+	return items, err
+}
+
+const insertGostarterMigration = `
 	INSERT INTO
-		migration (
+		gs_gostarter_migration (
 			id,
 			up_statement,
 			down_statement,
@@ -50,21 +72,56 @@ const insertMigration = `
 		);
 `
 
-func (q *Queries) InsertMigration(ctx context.Context, arg Migration) error {
-	return NamedExecOneRowContext(ctx, q.db, insertMigration, arg)
+func (q *Queries) InsertGostarterMigration(ctx context.Context, arg Migration) error {
+	return NamedExecOneRowContext(ctx, q.db, insertGostarterMigration, arg)
 }
 
-const deleteMigration = `
+const insertAppMigration = `
+	INSERT INTO
+		gs_app_migration (
+			id,
+			up_statement,
+			down_statement,
+			executed_at
+		) VALUES (
+			:id,
+			:up_statement,
+			:down_statement,
+			:executed_at
+		);
+`
+
+func (q *Queries) InsertAppMigration(ctx context.Context, arg Migration) error {
+	return NamedExecOneRowContext(ctx, q.db, insertAppMigration, arg)
+}
+
+const deleteGostarterMigration = `
 	DELETE FROM
-		migration
+		gs_gostarter_migration
 	WHERE
 		id = :id;
 `
 
-type DeleteMigrationParams struct {
+type DeleteGostarterMigrationParams struct {
 	ID string `db:"id"`
 }
 
-func (q *Queries) DeleteMigration(ctx context.Context, id string) error {
-	return NamedExecOneRowContext(ctx, q.db, deleteMigration, DeleteMigrationParams{ID: id})
+func (q *Queries) DeleteGostarterMigration(ctx context.Context, id string) error {
+	return NamedExecOneRowContext(ctx, q.db, deleteGostarterMigration, DeleteGostarterMigrationParams{ID: id})
+}
+
+const deleteAppMigration = `
+	DELETE FROM
+		gs_app_migration
+	WHERE
+		id = :id;
+`
+
+type DeleteAppMigrationParams struct {
+	ID string `db:"id"`
+}
+
+func (q *Queries) DeleteAppMigration(ctx context.Context, id string) error {
+
+	return NamedExecOneRowContext(ctx, q.db, deleteAppMigration, DeleteAppMigrationParams{ID: id})
 }
