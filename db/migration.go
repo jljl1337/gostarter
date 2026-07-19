@@ -14,16 +14,24 @@ import (
 	"github.com/jljl1337/gostarter/sql"
 )
 
+// Run [MigrateAllContext] with a background context.
+func MigrateAll(db *sqlx.DB, appMigrationFS embed.FS) error {
+	ctx := context.Background()
+	return MigrateAllContext(ctx, db, appMigrationFS)
+}
+
+// Run [MigrateContext] with gostarter migrations.
+func MigrateAllContext(ctx context.Context, db *sqlx.DB, appMigrationFS embed.FS) error {
+	return MigrateContext(ctx, db, true, appMigrationFS)
+}
+
 /*
 Migrate applies or rolls back database migrations based on the current state
 of the database and the embedded migration files. The embedded migrations
 are loaded from both the gostarter package and the appMigrationFS in the
-parameter. The gostarter migrations can be overridden by the app migrations
-individually by creating an app migration with the same corresponding ID.
+parameter.
 */
-func Migrate(db *sqlx.DB, appMigrationFS embed.FS) error {
-	ctx := context.Background()
-
+func MigrateContext(ctx context.Context, db *sqlx.DB, runGostarterMigration bool, appMigrationFS embed.FS) error {
 	tx, err := db.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
@@ -38,15 +46,10 @@ func Migrate(db *sqlx.DB, appMigrationFS embed.FS) error {
 		return fmt.Errorf("failed to create migration table: %w", err)
 	}
 
-	// Get the list of applied migrations
-	appliedMigrations, err := queries.GetAppliedMigrations(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get applied migrations: %w", err)
-	}
-
-	// Get the list of embedded migrations (gostarter and app migrations)
+	// Set the same timestamp for all migrations in this run
 	now := generator.NowISO8601()
 
+	// Get the list of embedded migrations (gostarter and app migrations)
 	gostarterMigrationList, err := LoadMigrations(sql.MigrationDir, now)
 	if err != nil {
 		return fmt.Errorf("failed to load gostarter migrations: %w", err)
@@ -57,58 +60,21 @@ func Migrate(db *sqlx.DB, appMigrationFS embed.FS) error {
 		return fmt.Errorf("failed to load app migrations: %w", err)
 	}
 
-	// Merge embedded migrations
-	embeddedMigrationList := MergeMigrations(gostarterMigrationList, appMigrationList)
+	// Replace gostarter migrations with app migrations if they have the same ID
+	gostarterMigrationList = replaceGostarterMigrations(gostarterMigrationList, appMigrationList)
 
-	// Compare the applied migrations with the embedded migrations
-	if len(appliedMigrations) > len(embeddedMigrationList) {
-		slog.Debug("Going to rollback applied migrations")
-	} else if len(appliedMigrations) < len(embeddedMigrationList) {
-		slog.Debug("Going to apply new migrations")
-	} else {
-		slog.Debug("Going to verify existing migrations")
-	}
-
-	minLen := min(len(appliedMigrations), len(embeddedMigrationList))
-
-	// Verify overlap migrations
-	for i := range minLen {
-		slog.Debug("Verifying migration: " + appliedMigrations[i].ID)
-		if appliedMigrations[i].ID != embeddedMigrationList[i].ID ||
-			appliedMigrations[i].UpStatement != embeddedMigrationList[i].UpStatement ||
-			appliedMigrations[i].DownStatement != embeddedMigrationList[i].DownStatement {
-			return fmt.Errorf("applied migration does not match embedded migration at ID %s", appliedMigrations[i].ID)
+	// Migrate gostarter migrations
+	if runGostarterMigration {
+		err = migrate(ctx, true, queries, gostarterMigrationList)
+		if err != nil {
+			return fmt.Errorf("failed to migrate gostarter migrations: %w", err)
 		}
 	}
 
-	if len(appliedMigrations) < len(embeddedMigrationList) {
-		// Apply new migrations
-		for i := minLen; i < len(embeddedMigrationList); i++ {
-			slog.Info("Applying migration: " + embeddedMigrationList[i].ID)
-			_, err := tx.ExecContext(ctx, embeddedMigrationList[i].UpStatement)
-			if err != nil {
-				return fmt.Errorf("failed to apply migration %s: %w", embeddedMigrationList[i].ID, err)
-			}
-
-			err = queries.InsertMigration(ctx, embeddedMigrationList[i])
-			if err != nil {
-				return fmt.Errorf("failed to record applied migration %s: %w", embeddedMigrationList[i].ID, err)
-			}
-		}
-	} else if len(appliedMigrations) > len(embeddedMigrationList) {
-		// Rollback applied migrations
-		for i := len(appliedMigrations) - 1; i >= minLen; i-- {
-			slog.Info("Rolling back migration: " + appliedMigrations[i].ID)
-			_, err := tx.ExecContext(ctx, appliedMigrations[i].DownStatement)
-			if err != nil {
-				return fmt.Errorf("failed to rollback migration %s: %w", appliedMigrations[i].ID, err)
-			}
-
-			err = queries.DeleteMigration(ctx, appliedMigrations[i].ID)
-			if err != nil {
-				return fmt.Errorf("failed to remove migration record %s: %w", appliedMigrations[i].ID, err)
-			}
-		}
+	// Migrate app migrations
+	err = migrate(ctx, false, queries, appMigrationList)
+	if err != nil {
+		return fmt.Errorf("failed to migrate app migrations: %w", err)
 	}
 
 	// Commit the transaction
@@ -192,41 +158,105 @@ func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
 }
 
 /*
-MergeMigrations merges two slices of migrations, gostarterMigrations and
-appMigrations, into a single slice. If a migration with the same ID exists
-in both slices, the one from appMigrations takes precedence. The resulting
-slice should be sorted by migration ID in ascending order.
+replaceGostarterMigrations replaces the gostarter migrations in the provided
+slice with the app migrations if an app migration has the same ID as a
+gostarter migration.
 */
-func MergeMigrations(gostarterMigrations, appMigrations []repository.Migration) []repository.Migration {
-	mergedMigrations := make([]repository.Migration, 0)
+func replaceGostarterMigrations(gostarterMigrations, appMigrations []repository.Migration) []repository.Migration {
+	// Create a map of app migrations for quick lookup
+	appMigrationMap := make(map[string]repository.Migration)
+	for _, migration := range appMigrations {
+		appMigrationMap[migration.ID] = migration
+	}
 
-	gostarterIndex := 0
-	appIndex := 0
-
-	for gostarterIndex < len(gostarterMigrations) || appIndex < len(appMigrations) {
-		if gostarterIndex < len(gostarterMigrations) && appIndex < len(appMigrations) {
-			gostarterMigration := gostarterMigrations[gostarterIndex]
-			appMigration := appMigrations[appIndex]
-
-			if gostarterMigration.ID == appMigration.ID {
-				mergedMigrations = append(mergedMigrations, appMigration)
-				gostarterIndex++
-				appIndex++
-			} else if gostarterMigration.ID < appMigration.ID {
-				mergedMigrations = append(mergedMigrations, gostarterMigration)
-				gostarterIndex++
-			} else {
-				mergedMigrations = append(mergedMigrations, appMigration)
-				appIndex++
-			}
-		} else if gostarterIndex < len(gostarterMigrations) {
-			mergedMigrations = append(mergedMigrations, gostarterMigrations[gostarterIndex])
-			gostarterIndex++
-		} else if appIndex < len(appMigrations) {
-			mergedMigrations = append(mergedMigrations, appMigrations[appIndex])
-			appIndex++
+	// Replace gostarter migrations with app migrations if they have the same ID
+	for i, gostarterMigration := range gostarterMigrations {
+		if appMigration, exists := appMigrationMap[gostarterMigration.ID]; exists {
+			gostarterMigrations[i] = appMigration
 		}
 	}
 
-	return mergedMigrations
+	return gostarterMigrations
+}
+
+func migrate(
+	ctx context.Context,
+	isGostarterMigration bool,
+	queries *repository.Queries,
+	embeddedMigrationList []repository.Migration,
+) error {
+	var err error
+
+	// Get the list of applied migrations
+	var appliedMigrations []repository.Migration
+	if isGostarterMigration {
+		appliedMigrations, err = queries.GetAppliedGostarterMigrations(ctx)
+	} else {
+		appliedMigrations, err = queries.GetAppliedAppMigrations(ctx)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to get applied migrations: %w", err)
+	}
+
+	// Compare the applied migrations with the embedded migrations
+	if len(appliedMigrations) > len(embeddedMigrationList) {
+		slog.Debug("Going to rollback applied migrations")
+	} else if len(appliedMigrations) < len(embeddedMigrationList) {
+		slog.Debug("Going to apply new migrations")
+	} else {
+		slog.Debug("Going to verify existing migrations")
+	}
+
+	minLen := min(len(appliedMigrations), len(embeddedMigrationList))
+
+	// Verify overlap migrations
+	for i := range minLen {
+		slog.Debug("Verifying migration: " + appliedMigrations[i].ID)
+		if appliedMigrations[i].ID != embeddedMigrationList[i].ID ||
+			appliedMigrations[i].UpStatement != embeddedMigrationList[i].UpStatement ||
+			appliedMigrations[i].DownStatement != embeddedMigrationList[i].DownStatement {
+			return fmt.Errorf("applied migration does not match embedded migration at ID %s", appliedMigrations[i].ID)
+		}
+	}
+
+	// Apply or rollback migrations as needed
+	if len(appliedMigrations) < len(embeddedMigrationList) {
+		// Apply new migrations
+		for i := minLen; i < len(embeddedMigrationList); i++ {
+			slog.Info("Applying migration: " + embeddedMigrationList[i].ID)
+			_, err := queries.ExecContext(ctx, embeddedMigrationList[i].UpStatement)
+			if err != nil {
+				return fmt.Errorf("failed to apply migration %s: %w", embeddedMigrationList[i].ID, err)
+			}
+
+			if isGostarterMigration {
+				err = queries.InsertGostarterMigration(ctx, embeddedMigrationList[i])
+			} else {
+				err = queries.InsertAppMigration(ctx, embeddedMigrationList[i])
+			}
+			if err != nil {
+				return fmt.Errorf("failed to record applied migration %s: %w", embeddedMigrationList[i].ID, err)
+			}
+		}
+	} else if len(appliedMigrations) > len(embeddedMigrationList) {
+		// Rollback applied migrations
+		for i := len(appliedMigrations) - 1; i >= minLen; i-- {
+			slog.Info("Rolling back migration: " + appliedMigrations[i].ID)
+			_, err := queries.ExecContext(ctx, appliedMigrations[i].DownStatement)
+			if err != nil {
+				return fmt.Errorf("failed to rollback migration %s: %w", appliedMigrations[i].ID, err)
+			}
+
+			if isGostarterMigration {
+				err = queries.DeleteGostarterMigration(ctx, appliedMigrations[i].ID)
+			} else {
+				err = queries.DeleteAppMigration(ctx, appliedMigrations[i].ID)
+			}
+			if err != nil {
+				return fmt.Errorf("failed to remove migration record %s: %w", appliedMigrations[i].ID, err)
+			}
+		}
+	}
+
+	return nil
 }
