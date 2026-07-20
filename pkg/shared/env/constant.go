@@ -123,3 +123,10 @@ func MustSetConstants() { // TODO: list of warning
 
 	ConstantsSet = true
 }
+
+func prefix(str string, add bool) string {
+	if add {
+		return "GOSTARTER_" + str
+	}
+	return str
+}
