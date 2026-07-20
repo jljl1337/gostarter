@@ -27,7 +27,7 @@ func NewEndpointHandler(
 
 func (h *EndpointHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.registerHealthCheckRoutes(mux)
-	h.registerVersionRoutes(mux)
+	h.registerMetaRoutes(mux)
 	h.registerAuthRoutes(mux)
 	h.registerAccountRoutes(mux)
 }
