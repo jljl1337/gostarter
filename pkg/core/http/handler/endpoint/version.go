@@ -6,14 +6,18 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
 
-type versionResponse struct {
-	Version string `json:"version"`
+type metaResponse struct {
+	Version   string `json:"version"`
+	CommitSHA string `json:"commit_sha"`
 }
 
 func (h *EndpointHandler) registerVersionRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/version", h.version)
+	mux.HandleFunc("/meta", h.meta)
 }
 
-func (h *EndpointHandler) version(w http.ResponseWriter, r *http.Request) {
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, versionResponse{Version: env.Version})
+func (h *EndpointHandler) meta(w http.ResponseWriter, r *http.Request) {
+	h.responseHandler.WriteJSONResponse(w, http.StatusOK, metaResponse{
+		Version:   env.Version,
+		CommitSHA: env.CommitSHA,
+	})
 }
