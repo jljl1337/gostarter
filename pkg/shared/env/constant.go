@@ -12,7 +12,8 @@ const (
 var (
 	// Variables set at build time
 
-	Version = "dev"
+	Version   = "dev"
+	CommitSHA = "unknown"
 
 	// Internal variables
 
