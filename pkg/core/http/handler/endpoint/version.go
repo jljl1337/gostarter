@@ -11,7 +11,7 @@ type metaResponse struct {
 	CommitSHA string `json:"commit_sha"`
 }
 
-func (h *EndpointHandler) registerVersionRoutes(mux *http.ServeMux) {
+func (h *EndpointHandler) registerMetaRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/meta", h.meta)
 }
 
