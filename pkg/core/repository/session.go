@@ -5,7 +5,7 @@ import (
 )
 
 const createSession = `
-	INSERT INTO session (
+	INSERT INTO gs_session (
 		id,
 		account_id,
 		token,
@@ -32,7 +32,7 @@ const getSessionByToken = `
 	SELECT
 		*
 	FROM
-		session
+		gs_session
 	WHERE
 		token = :token
 `
@@ -49,7 +49,7 @@ func (q *Queries) GetSessionByToken(ctx context.Context, token string) ([]Sessio
 
 const updateSessionByToken = `
 	UPDATE
-		session
+		gs_session
 	SET
 		expires_at = :expires_at,
 		updated_at = :updated_at
@@ -69,7 +69,7 @@ func (q *Queries) UpdateSessionByToken(ctx context.Context, arg UpdateSessionByT
 
 const updateSessionByAccountID = `
 	UPDATE
-		session
+		gs_session
 	SET
 		expires_at = :expires_at,
 		updated_at = :updated_at
@@ -90,7 +90,7 @@ func (q *Queries) UpdateSessionByAccountID(ctx context.Context, arg UpdateSessio
 
 const deleteSessionByExpiresAt = `
 	DELETE FROM
-		session
+		gs_session
 	WHERE
 		expires_at < :expires_at
 `

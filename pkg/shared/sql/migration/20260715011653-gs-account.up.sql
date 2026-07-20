@@ -1,4 +1,4 @@
-CREATE TABLE account (
+CREATE TABLE gs_account (
     id TEXT NOT NULL,
     username TEXT NOT NULL,
     password_hash TEXT NOT NULL,
@@ -11,4 +11,4 @@ CREATE TABLE account (
     UNIQUE (username)
 );
 
-CREATE INDEX idx_account_username ON account(username);
+CREATE INDEX idx_gs_account_username ON gs_account(username);

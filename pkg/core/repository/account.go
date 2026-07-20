@@ -5,7 +5,7 @@ import (
 )
 
 const createAccount = `
-	INSERT INTO account (
+	INSERT INTO gs_account (
 		id,
 		username,
 		email,
@@ -36,7 +36,7 @@ const getAccountCountByRole = `
 	SELECT
 		COUNT(*) AS count
 	FROM
-		account
+		gs_account
 	WHERE
 		role = :role
 `
@@ -55,7 +55,7 @@ const getAccountByID = `
 	SELECT
 		*
 	FROM
-		account
+		gs_account
 	WHERE
 		id = :id
 `
@@ -74,7 +74,7 @@ const getAccountByUsername = `
 	SELECT
 		*
 	FROM
-		account
+		gs_account
 	WHERE
 		username = :username
 `
@@ -91,7 +91,7 @@ func (q *Queries) GetAccountByUsername(ctx context.Context, username string) ([]
 
 const updateAccountPassword = `
 	UPDATE
-		account
+		gs_account
 	SET
 		password_hash = :password_hash,
 		updated_at = :updated_at
@@ -111,7 +111,7 @@ func (q *Queries) UpdateAccountPassword(ctx context.Context, arg UpdateAccountPa
 
 const updateAccountUsername = `
 	UPDATE
-		account
+		gs_account
 	SET
 		username = :username,
 		updated_at = :updated_at
@@ -131,7 +131,7 @@ func (q *Queries) UpdateAccountUsername(ctx context.Context, arg UpdateAccountUs
 
 const updateAccountLanguage = `
 	UPDATE
-		account
+		gs_account
 	SET
 		language_code = :language_code,
 		updated_at = :updated_at
@@ -151,7 +151,7 @@ func (q *Queries) UpdateAccountLanguage(ctx context.Context, arg UpdateAccountLa
 
 const deleteAccount = `
 	DELETE FROM
-		account
+		gs_account
 	WHERE
 		id = :id
 `

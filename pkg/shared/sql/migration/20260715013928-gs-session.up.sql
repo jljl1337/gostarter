@@ -1,4 +1,4 @@
-CREATE TABLE session (
+CREATE TABLE gs_session (
     id TEXT NOT NULL,
     account_id TEXT,
     token TEXT NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE session (
 
     PRIMARY KEY (id),
     UNIQUE (token),
-    FOREIGN KEY (account_id) REFERENCES account(id) ON DELETE CASCADE
+    FOREIGN KEY (account_id) REFERENCES gs_account(id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_session_account_id ON session(account_id);
+CREATE INDEX idx_gs_session_account_id ON gs_session(account_id);
