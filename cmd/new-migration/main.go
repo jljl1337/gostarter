@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jljl1337/gostarter/generator"
+	"github.com/jljl1337/gostarter/pkg/shared/generator"
 )
 
 func main() {
