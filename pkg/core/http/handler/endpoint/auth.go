@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
@@ -151,8 +150,7 @@ func (h *EndpointHandler) signOutAll(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	account := middleware.GetAccountFromContext(ctx)
 	if account == nil {
-		slog.Error("Error getting account from context")
-		h.responseHandler.WriteMessageResponse(w, "Internal server error", http.StatusInternalServerError)
+		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
 	}
 
