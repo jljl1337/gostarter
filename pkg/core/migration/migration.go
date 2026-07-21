@@ -4,13 +4,13 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"log/slog"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
+	"github.com/jljl1337/gostarter/pkg/shared/log"
 	"github.com/jljl1337/gostarter/pkg/shared/sql"
 )
 
@@ -102,7 +102,7 @@ func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
 	for _, dirEntry := range dirEntryList {
 		// Skip directories
 		if dirEntry.IsDir() {
-			slog.Warn("Skipping directory in migrations: " + dirEntry.Name())
+			log.Warnf("Skipping directory in migrations: %s", dirEntry.Name())
 			continue
 		}
 
@@ -111,7 +111,7 @@ func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
 
 		// Remove .up.sql or .down.sql suffix to get the migration ID
 		if len(filename) < 7 || (filename[len(filename)-7:] != ".up.sql" && filename[len(filename)-9:] != ".down.sql") {
-			slog.Warn("Skipping file with invalid migration filename: " + filename)
+			log.Warnf("Skipping file with invalid migration filename: %s", filename)
 			continue
 		}
 
@@ -200,18 +200,18 @@ func migrate(
 
 	// Compare the applied migrations with the embedded migrations
 	if len(appliedMigrations) > len(embeddedMigrationList) {
-		slog.Debug("Going to rollback applied migrations")
+		log.Debug("Going to rollback applied migrations")
 	} else if len(appliedMigrations) < len(embeddedMigrationList) {
-		slog.Debug("Going to apply new migrations")
+		log.Debug("Going to apply new migrations")
 	} else {
-		slog.Debug("Going to verify existing migrations")
+		log.Debug("Going to verify existing migrations")
 	}
 
 	minLen := min(len(appliedMigrations), len(embeddedMigrationList))
 
 	// Verify overlap migrations
 	for i := range minLen {
-		slog.Debug("Verifying migration: " + appliedMigrations[i].ID)
+		log.Debugf("Verifying migration: %s", appliedMigrations[i].ID)
 		if appliedMigrations[i].ID != embeddedMigrationList[i].ID ||
 			appliedMigrations[i].UpStatement != embeddedMigrationList[i].UpStatement ||
 			appliedMigrations[i].DownStatement != embeddedMigrationList[i].DownStatement {
@@ -223,7 +223,7 @@ func migrate(
 	if len(appliedMigrations) < len(embeddedMigrationList) {
 		// Apply new migrations
 		for i := minLen; i < len(embeddedMigrationList); i++ {
-			slog.Info("Applying migration: " + embeddedMigrationList[i].ID)
+			log.Infof("Applying migration: %s", embeddedMigrationList[i].ID)
 			_, err := queries.ExecContext(ctx, embeddedMigrationList[i].UpStatement)
 			if err != nil {
 				return fmt.Errorf("failed to apply migration %s: %w", embeddedMigrationList[i].ID, err)
@@ -241,7 +241,7 @@ func migrate(
 	} else if len(appliedMigrations) > len(embeddedMigrationList) {
 		// Rollback applied migrations
 		for i := len(appliedMigrations) - 1; i >= minLen; i-- {
-			slog.Info("Rolling back migration: " + appliedMigrations[i].ID)
+			log.Infof("Rolling back migration: %s", appliedMigrations[i].ID)
 			_, err := queries.ExecContext(ctx, appliedMigrations[i].DownStatement)
 			if err != nil {
 				return fmt.Errorf("failed to rollback migration %s: %w", appliedMigrations[i].ID, err)

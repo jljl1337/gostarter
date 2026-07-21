@@ -3,7 +3,6 @@ package cron
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -13,6 +12,7 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/db"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
+	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
 
 func NewSchedulerFromEnv(dbInstance *sqlx.DB) (gocron.Scheduler, error) {
@@ -29,10 +29,10 @@ func NewSchedulerFromEnv(dbInstance *sqlx.DB) (gocron.Scheduler, error) {
 				return nil, fmt.Errorf("failed to create cron job: %w", err)
 			}
 		} else {
-			slog.Warn("SQLite Database backup cron job not scheduled")
+			log.Warn("SQLite Database backup cron job not scheduled")
 		}
 	} else {
-		slog.Info("Database backup not available for PostgreSQL, skip adding cron job")
+		log.Info("Database backup not available for PostgreSQL, skip adding cron job")
 	}
 
 	// Session cleanup job
@@ -42,7 +42,7 @@ func NewSchedulerFromEnv(dbInstance *sqlx.DB) (gocron.Scheduler, error) {
 			return nil, fmt.Errorf("failed to create session cleanup cron job: %w", err)
 		}
 	} else {
-		slog.Warn("Session cleanup cron job not scheduled")
+		log.Warn("Session cleanup cron job not scheduled")
 	}
 
 	return scheduler, nil
@@ -56,16 +56,16 @@ func AddSQLiteBackupJob(scheduler gocron.Scheduler, dbInstance *sqlx.DB) (gocron
 		),
 		gocron.NewTask(
 			func() {
-				slog.Info("Starting database backup")
+				log.Info("Starting database backup")
 
 				start := time.Now()
 
 				if err := db.BackupSQLiteDBFromEnv(dbInstance); err != nil {
-					slog.Error("Failed to backup database: " + err.Error())
+					log.Errorf("Failed to backup database: %v", err)
 					return
 				}
 
-				slog.Info("Database backup completed in " + time.Since(start).String())
+				log.Infof("Database backup completed in %s", time.Since(start).String())
 			},
 		),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
@@ -80,7 +80,7 @@ func AddSessionCleanupJob(scheduler gocron.Scheduler, dbInstance *sqlx.DB) (gocr
 		),
 		gocron.NewTask(
 			func() {
-				slog.Info("Starting session cleanup")
+				log.Info("Starting session cleanup")
 
 				start := time.Now()
 
@@ -88,11 +88,11 @@ func AddSessionCleanupJob(scheduler gocron.Scheduler, dbInstance *sqlx.DB) (gocr
 				queries := repository.NewQueries(dbInstance)
 				rows, err := queries.DeleteSessionByExpiresAt(context.Background(), now)
 				if err != nil {
-					slog.Error("Failed to cleanup expired sessions: " + err.Error())
+					log.Errorf("Failed to cleanup expired sessions: %v", err)
 					return
 				}
 
-				slog.Info(fmt.Sprintf("Session cleanup completed in %s, %d sessions deleted", time.Since(start).String(), rows))
+				log.Infof("Session cleanup completed in %s, %d sessions deleted", time.Since(start).String(), rows)
 			},
 		),
 		gocron.WithSingletonMode(gocron.LimitModeReschedule),
