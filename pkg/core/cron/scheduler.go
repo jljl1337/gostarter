@@ -24,7 +24,7 @@ func NewSchedulerFromEnv(schedulerService *cron.SchedulerService) (*Scheduler, e
 	}
 
 	// Database backup job (only for SQLite)
-	if env.DatabaseDriver == "sqlite" {
+	if env.DatabaseDriver == env.DatabaseDriverSQLite {
 		if env.EnableSQLiteBackup {
 			err = AddSQLiteBackupJob(scheduler)
 			if err != nil {
@@ -34,7 +34,7 @@ func NewSchedulerFromEnv(schedulerService *cron.SchedulerService) (*Scheduler, e
 			log.Warn("SQLite Database backup cron job not scheduled")
 		}
 	} else {
-		log.Info("Database backup not available for PostgreSQL, skip adding cron job")
+		log.Info("Database backup is only available for SQLite, skip adding cron job")
 	}
 
 	// Session cleanup job
