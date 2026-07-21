@@ -25,7 +25,7 @@ const createSession = `
 `
 
 func (q *Queries) CreateSession(ctx context.Context, arg Session) error {
-	return NamedExecOneRowContext(ctx, q.db, createSession, arg)
+	return q.NamedExecOneRowContext(ctx, createSession, arg)
 }
 
 const getSessionByToken = `
@@ -43,7 +43,7 @@ type GetSessionByTokenParams struct {
 
 func (q *Queries) GetSessionByToken(ctx context.Context, token string) ([]Session, error) {
 	items := []Session{}
-	err := NamedSelectContext(ctx, q.db, &items, getSessionByToken, GetSessionByTokenParams{Token: token})
+	err := q.NamedSelectContext(ctx, &items, getSessionByToken, GetSessionByTokenParams{Token: token})
 	return items, err
 }
 
@@ -64,7 +64,7 @@ type UpdateSessionByTokenParams struct {
 }
 
 func (q *Queries) UpdateSessionByToken(ctx context.Context, arg UpdateSessionByTokenParams) error {
-	return NamedExecOneRowContext(ctx, q.db, updateSessionByToken, arg)
+	return q.NamedExecOneRowContext(ctx, updateSessionByToken, arg)
 }
 
 const updateSessionByAccountID = `
@@ -85,7 +85,7 @@ type UpdateSessionByAccountIDParams struct {
 }
 
 func (q *Queries) UpdateSessionByAccountID(ctx context.Context, arg UpdateSessionByAccountIDParams) (int64, error) {
-	return NamedExecRowsAffectedContext(ctx, q.db, updateSessionByAccountID, arg)
+	return q.NamedExecRowsAffectedContext(ctx, updateSessionByAccountID, arg)
 }
 
 const deleteSessionByExpiresAt = `
@@ -100,5 +100,5 @@ type DeleteSessionByExpiresAtParams struct {
 }
 
 func (q *Queries) DeleteSessionByExpiresAt(ctx context.Context, expiresAt string) (int64, error) {
-	return NamedExecRowsAffectedContext(ctx, q.db, deleteSessionByExpiresAt, DeleteSessionByExpiresAtParams{ExpiresAt: expiresAt})
+	return q.NamedExecRowsAffectedContext(ctx, deleteSessionByExpiresAt, DeleteSessionByExpiresAtParams{ExpiresAt: expiresAt})
 }
