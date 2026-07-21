@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-
-	"github.com/jmoiron/sqlx"
 )
 
 const createMigrationTable = `
@@ -23,7 +21,7 @@ const createMigrationTable = `
 `
 
 func (q *Queries) CreateMigrationTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createMigrationTable)
+	_, err := q.ExecContext(ctx, createMigrationTable)
 	return err
 }
 
@@ -38,7 +36,7 @@ const getAppliedGostarterMigrations = `
 
 func (q *Queries) GetAppliedGostarterMigrations(ctx context.Context) ([]Migration, error) {
 	items := []Migration{}
-	err := sqlx.SelectContext(ctx, q.db, &items, getAppliedGostarterMigrations)
+	err := q.SelectContext(ctx, &items, getAppliedGostarterMigrations)
 	return items, err
 }
 
@@ -53,7 +51,7 @@ const getAppliedAppMigrations = `
 
 func (q *Queries) GetAppliedAppMigrations(ctx context.Context) ([]Migration, error) {
 	items := []Migration{}
-	err := sqlx.SelectContext(ctx, q.db, &items, getAppliedAppMigrations)
+	err := q.SelectContext(ctx, &items, getAppliedAppMigrations)
 	return items, err
 }
 
@@ -73,7 +71,7 @@ const insertGostarterMigration = `
 `
 
 func (q *Queries) InsertGostarterMigration(ctx context.Context, arg Migration) error {
-	return NamedExecOneRowContext(ctx, q.db, insertGostarterMigration, arg)
+	return q.NamedExecOneRowContext(ctx, insertGostarterMigration, arg)
 }
 
 const insertAppMigration = `
@@ -92,7 +90,7 @@ const insertAppMigration = `
 `
 
 func (q *Queries) InsertAppMigration(ctx context.Context, arg Migration) error {
-	return NamedExecOneRowContext(ctx, q.db, insertAppMigration, arg)
+	return q.NamedExecOneRowContext(ctx, insertAppMigration, arg)
 }
 
 const deleteGostarterMigration = `
@@ -107,7 +105,7 @@ type DeleteGostarterMigrationParams struct {
 }
 
 func (q *Queries) DeleteGostarterMigration(ctx context.Context, id string) error {
-	return NamedExecOneRowContext(ctx, q.db, deleteGostarterMigration, DeleteGostarterMigrationParams{ID: id})
+	return q.NamedExecOneRowContext(ctx, deleteGostarterMigration, DeleteGostarterMigrationParams{ID: id})
 }
 
 const deleteAppMigration = `
@@ -123,5 +121,5 @@ type DeleteAppMigrationParams struct {
 
 func (q *Queries) DeleteAppMigration(ctx context.Context, id string) error {
 
-	return NamedExecOneRowContext(ctx, q.db, deleteAppMigration, DeleteAppMigrationParams{ID: id})
+	return q.NamedExecOneRowContext(ctx, deleteAppMigration, DeleteAppMigrationParams{ID: id})
 }

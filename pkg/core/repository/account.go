@@ -29,7 +29,7 @@ const createAccount = `
 `
 
 func (q *Queries) CreateAccount(ctx context.Context, arg Account) error {
-	return NamedExecOneRowContext(ctx, q.db, createAccount, arg)
+	return q.NamedExecOneRowContext(ctx, createAccount, arg)
 }
 
 const getAccountCountByRole = `
@@ -47,7 +47,7 @@ type GetAccountCountByRoleParams struct {
 
 func (q *Queries) GetAccountCountByRole(ctx context.Context, role string) (int, error) {
 	var count int
-	err := NamedGetContext(ctx, q.db, &count, getAccountCountByRole, GetAccountCountByRoleParams{Role: role})
+	err := q.NamedGetContext(ctx, &count, getAccountCountByRole, GetAccountCountByRoleParams{Role: role})
 	return count, err
 }
 
@@ -66,7 +66,7 @@ type GetAccountByIDParams struct {
 
 func (q *Queries) GetAccountByID(ctx context.Context, id string) (Account, error) {
 	account := Account{}
-	err := NamedGetContext(ctx, q.db, &account, getAccountByID, GetAccountByIDParams{ID: id})
+	err := q.NamedGetContext(ctx, &account, getAccountByID, GetAccountByIDParams{ID: id})
 	return account, err
 }
 
@@ -85,7 +85,7 @@ type GetAccountByUsernameParams struct {
 
 func (q *Queries) GetAccountByUsername(ctx context.Context, username string) ([]Account, error) {
 	items := []Account{}
-	err := NamedSelectContext(ctx, q.db, &items, getAccountByUsername, GetAccountByUsernameParams{Username: username})
+	err := q.NamedSelectContext(ctx, &items, getAccountByUsername, GetAccountByUsernameParams{Username: username})
 	return items, err
 }
 
@@ -106,7 +106,7 @@ type UpdateAccountPasswordParams struct {
 }
 
 func (q *Queries) UpdateAccountPassword(ctx context.Context, arg UpdateAccountPasswordParams) error {
-	return NamedExecOneRowContext(ctx, q.db, updateAccountPassword, arg)
+	return q.NamedExecOneRowContext(ctx, updateAccountPassword, arg)
 }
 
 const updateAccountUsername = `
@@ -126,7 +126,7 @@ type UpdateAccountUsernameParams struct {
 }
 
 func (q *Queries) UpdateAccountUsername(ctx context.Context, arg UpdateAccountUsernameParams) error {
-	return NamedExecOneRowContext(ctx, q.db, updateAccountUsername, arg)
+	return q.NamedExecOneRowContext(ctx, updateAccountUsername, arg)
 }
 
 const updateAccountLanguage = `
@@ -146,7 +146,7 @@ type UpdateAccountLanguageParams struct {
 }
 
 func (q *Queries) UpdateAccountLanguage(ctx context.Context, arg UpdateAccountLanguageParams) error {
-	return NamedExecOneRowContext(ctx, q.db, updateAccountLanguage, arg)
+	return q.NamedExecOneRowContext(ctx, updateAccountLanguage, arg)
 }
 
 const deleteAccount = `
@@ -161,5 +161,5 @@ type DeleteAccountParams struct {
 }
 
 func (q *Queries) DeleteAccount(ctx context.Context, id string) error {
-	return NamedExecOneRowContext(ctx, q.db, deleteAccount, DeleteAccountParams{ID: id})
+	return q.NamedExecOneRowContext(ctx, deleteAccount, DeleteAccountParams{ID: id})
 }
