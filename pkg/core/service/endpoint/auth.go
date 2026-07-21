@@ -69,7 +69,7 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 	// }
 
 	if err = queries.CreateAccount(ctx, repository.Account{
-		ID:           generator.NewULID(),
+		ID:           s.NewID(),
 		Username:     arg.Username,
 		PasswordHash: passwordHash,
 		Role:         "user", // TODO
@@ -88,7 +88,7 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 func (s *EndpointService) GetPreSession(ctx context.Context) (string, string, error) {
 	queries := repository.NewQueries(s.db)
 
-	sessionID := generator.NewULID()
+	sessionID := s.NewID()
 	sessionToken := generator.NewToken(env.SessionTokenLength, env.SessionTokenCharset)
 	CSRFToken := generator.NewToken(env.CSRFTokenLength, env.CSRFTokenCharset)
 	currentTime := generator.NowISO8601()
@@ -213,7 +213,7 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 		}
 	}
 
-	sessionID := generator.NewULID()
+	sessionID := s.NewID()
 	sessionToken := generator.NewToken(env.SessionTokenLength, env.SessionTokenCharset)
 	CSRFToken := generator.NewToken(env.CSRFTokenLength, env.CSRFTokenCharset)
 	expiresAt := generator.MinutesFromNowISO8601(env.SessionLifetimeMin)

@@ -9,14 +9,20 @@ import (
 
 type EndpointService struct {
 	db                *sqlx.DB
+	idGenerator       func() string
 	hashingManager    *crypto.HashingManager
 	validationManager *validation.ValidationManager
 }
 
-func NewEndpointService(db *sqlx.DB, hashingManager *crypto.HashingManager, validationManager *validation.ValidationManager) *EndpointService {
+func NewEndpointService(db *sqlx.DB, idGenerator func() string, hashingManager *crypto.HashingManager, validationManager *validation.ValidationManager) *EndpointService {
 	return &EndpointService{
 		db:                db,
+		idGenerator:       idGenerator,
 		hashingManager:    hashingManager,
 		validationManager: validationManager,
 	}
+}
+
+func (s *EndpointService) NewID() string {
+	return s.idGenerator()
 }
