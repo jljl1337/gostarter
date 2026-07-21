@@ -3,11 +3,12 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"log/slog"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/jljl1337/gostarter/pkg/core/service"
+	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
 
 /*
@@ -101,11 +102,23 @@ func (rh *ResponseHandler) WriteMessageResponse(w http.ResponseWriter, message s
 	rh.WriteJSONCodeMessageResponse(w, message, statusCode, jsonCode)
 }
 
+// WriteErrorResponsef writes an error response to the HTTP response writer
+// with a formatted message. It creates a new internal error with the provided
+// format and arguments, and then calls WriteErrorResponse to handle the
+// response.
+func (rh *ResponseHandler) WriteErrorResponsef(w http.ResponseWriter, format string, args ...any) {
+	message := fmt.Sprintf(format, args...)
+	rh.WriteErrorResponse(w, errors.New(message))
+}
+
 /*
 WriteErrorResponse writes an error response to the HTTP response writer. It
 maps the provided error to a generic service error, determines the appropriate
 HTTP status code and JSON error code, and writes a JSON response with the
 error message.
+
+It is also safe to write any internal errors with this function, as it will log
+the error and return a generic internal server error message to the client.
 */
 func (rh *ResponseHandler) WriteErrorResponse(w http.ResponseWriter, err error) {
 	var serviceErr *service.ServiceError
@@ -125,12 +138,12 @@ func (rh *ResponseHandler) WriteErrorResponse(w http.ResponseWriter, err error) 
 		message = genericErr.Message
 
 		if statusCode == http.StatusInternalServerError {
-			slog.Error("Internal server error: service error: " + genericErr.Error())
+			log.Errorf("Internal server error: service error: %v", genericErr)
 			jsonCode = "500"
 			message = "Internal server error"
 		}
 	} else {
-		slog.Error("Internal server error: unknown error: " + err.Error())
+		log.Errorf("Internal server error: unknown error: %v", err)
 		statusCode = http.StatusInternalServerError
 		jsonCode = "500"
 		message = "Internal server error"

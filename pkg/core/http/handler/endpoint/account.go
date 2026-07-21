@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
@@ -29,8 +28,7 @@ func (h *EndpointHandler) getCurrentAccount(w http.ResponseWriter, r *http.Reque
 	// Process the request
 	account := middleware.GetAccountFromContext(r.Context())
 	if account == nil {
-		slog.Error("Error getting account from context")
-		h.responseHandler.WriteMessageResponse(w, "Internal server error", http.StatusInternalServerError)
+		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
 	}
 
@@ -62,8 +60,7 @@ func (h *EndpointHandler) updateUsername(w http.ResponseWriter, r *http.Request)
 	// Process the request
 	account := middleware.GetAccountFromContext(r.Context())
 	if account == nil {
-		slog.Error("Error getting account from context")
-		h.responseHandler.WriteMessageResponse(w, "Internal server error", http.StatusInternalServerError)
+		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
 	}
 
@@ -97,8 +94,7 @@ func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request)
 	// Process the request
 	account := middleware.GetAccountFromContext(r.Context())
 	if account == nil {
-		slog.Error("Error getting account from context")
-		h.responseHandler.WriteMessageResponse(w, "Internal server error", http.StatusInternalServerError)
+		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
 	}
 
@@ -132,8 +128,7 @@ func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request)
 	// Process the request
 	account := middleware.GetAccountFromContext(r.Context())
 	if account == nil {
-		slog.Error("Error getting account from context")
-		h.responseHandler.WriteMessageResponse(w, "Internal server error", http.StatusInternalServerError)
+		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
 	}
 
@@ -153,8 +148,7 @@ func (h *EndpointHandler) deleteCurrentAccount(w http.ResponseWriter, r *http.Re
 	// Process the request
 	account := middleware.GetAccountFromContext(r.Context())
 	if account == nil {
-		slog.Error("Error getting account from context")
-		h.responseHandler.WriteMessageResponse(w, "Internal server error", http.StatusInternalServerError)
+		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
 	}
 

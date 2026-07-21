@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/repository"
@@ -10,6 +9,7 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/format"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
+	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
 
 type SignUpParams struct {
@@ -137,7 +137,7 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 	}
 
 	if len(sessions) < 1 {
-		slog.Debug("Session not found")
+		log.Debug("Session not found")
 		return "", "", service.NewServiceError(service.ErrCodeUnauthorized, "invalid pre-session")
 	}
 
@@ -145,13 +145,13 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 
 	// Check if the session is already associated with a user
 	if session.AccountID != nil {
-		slog.Debug("Session is is not a pre-session")
+		log.Debug("Session is is not a pre-session")
 		return "", "", service.NewServiceError(service.ErrCodeUnauthorized, "invalid pre-session")
 	}
 
 	// CSRF token does not match
 	if arg.PreSessionCSRFToken != "" && session.CsrfToken != arg.PreSessionCSRFToken {
-		slog.Debug("CSRF token does not match")
+		log.Debug("CSRF token does not match")
 		return "", "", service.NewServiceError(service.ErrCodeUnauthorized, "csrf token does not match")
 	}
 
@@ -173,7 +173,7 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 	}
 
 	if len(accounts) < 1 {
-		slog.Debug("Account not found")
+		log.Debug("Account not found")
 		return "", "", service.NewServiceError(service.ErrCodeInvalidCredentials, "invalid credentials")
 	}
 
@@ -185,7 +185,7 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 	}
 
 	if !valid {
-		slog.Debug("Invalid password")
+		log.Debug("Invalid password")
 		return "", "", service.NewServiceError(service.ErrCodeInvalidCredentials, "invalid credentials")
 	}
 
