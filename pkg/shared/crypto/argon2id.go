@@ -5,7 +5,6 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
-	"log/slog"
 
 	"golang.org/x/crypto/argon2"
 
@@ -117,19 +116,16 @@ func (h *Argon2idHasher) Compare(hash, password string) (bool, error) {
 	}
 
 	if version != argon2.Version {
-		slog.Warn(fmt.Sprintf("Hash version mismatch: expected %d, got %d", argon2.Version, version))
-		return false, fmt.Errorf("version mismatch")
+		return false, fmt.Errorf("argon2id version mismatch, expected %d, got %d", argon2.Version, version)
 	}
 
 	// Decode the base64 encoded salt and hash
 	saltDecoded, err := base64.RawStdEncoding.DecodeString(string(salt))
 	if err != nil {
-		slog.Warn(fmt.Sprintf("Failed to decode salt: %v", err))
 		return false, fmt.Errorf("failed to decode salt: %w", err)
 	}
 	hashDecoded, err := base64.RawStdEncoding.DecodeString(string(hashBytes))
 	if err != nil {
-		slog.Warn(fmt.Sprintf("Failed to decode hash: %v", err))
 		return false, fmt.Errorf("failed to decode hash: %w", err)
 	}
 
