@@ -89,8 +89,8 @@ func (s *Scheduler) Start() {
 	s.scheduler.Start()
 }
 
-func (s *Scheduler) Shutdown() error {
-	return s.scheduler.Shutdown()
+func (s *Scheduler) Shutdown(ctx context.Context) error {
+	return s.scheduler.ShutdownWithContext(ctx)
 }
 
 func AddSQLiteBackupJob(scheduler *Scheduler) error {
