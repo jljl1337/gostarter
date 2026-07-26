@@ -59,7 +59,7 @@ NewDefaultResponseHandler creates a new ResponseHandler with default mappings
 for generic error codes and JSON error codes. It returns a pointer to the
 ResponseHandler.
 
-This function should not be used in production code. Instead, use
+This function should not be used in application code. Instead, use
 NewResponseHandler with custom mappings to ensure that error handling is
 tailored to the specific needs of your application.
 */
