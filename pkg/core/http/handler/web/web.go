@@ -7,14 +7,19 @@ import (
 )
 
 type WebHandler struct {
+	path   string
 	siteFs fs.FS
 }
 
-func NewWebHandler(siteFs fs.FS) *WebHandler {
-	return &WebHandler{siteFs: siteFs}
+func NewWebHandler(path string, siteFs fs.FS) *WebHandler {
+	return &WebHandler{path: path, siteFs: siteFs}
 }
 
-func (h *WebHandler) ServeSite(w http.ResponseWriter, r *http.Request) {
+func (h *WebHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc(h.path, h.serveSite)
+}
+
+func (h *WebHandler) serveSite(w http.ResponseWriter, r *http.Request) {
 	// Try to serve the requested file
 	filePath := strings.TrimPrefix(r.URL.Path, "/")
 	if filePath == "" {
