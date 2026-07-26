@@ -2,10 +2,24 @@ package validation
 
 import "regexp"
 
+const (
+	DefaultLanguageCodeList = "en-US"
+	DefaultUsernameRegex    = "^[a-zA-Z0-9_]{3,20}$"
+	DefaultPasswordRegex    = "^[A-Za-z0-9!@#$%^&*]{8,64}$"
+)
+
 type ValidationManager struct {
 	languageCodeMap map[string]bool
 	usernameRegex   *regexp.Regexp
 	passwordRegex   *regexp.Regexp
+}
+
+func NewDefaultValidationManager() (*ValidationManager, error) {
+	return NewValidationManager(
+		[]string{DefaultLanguageCodeList},
+		DefaultUsernameRegex,
+		DefaultPasswordRegex,
+	)
 }
 
 func NewValidationManager(languageCodeList []string, usernameRegex string, passwordRegex string) (*ValidationManager, error) {

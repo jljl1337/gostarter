@@ -18,3 +18,11 @@ func NewMiddlewareProvider(service *service.MiddlewareService, responseHandler *
 		responseHandler: responseHandler,
 	}
 }
+
+func (p *MiddlewareProvider) GetMiddlewareList() []Middleware {
+	return []Middleware{
+		p.CORS(),
+		p.Logging(),
+		p.Auth(),
+	}
+}

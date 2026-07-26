@@ -17,15 +17,12 @@ func NewHashingManagerFromEnv() (*HashingManager, error) {
 		return nil, fmt.Errorf("failed to create Argon2id hasher: %w", err)
 	}
 
-	hasherList := []Hasher{
-		argon2idHasher,
-		NewBcryptHasherFromEnv(),
-	}
+	bcryptHasher := NewBcryptHasherFromEnv()
 
-	return NewHashingManager(hasherList)
+	return NewHashingManager(argon2idHasher, bcryptHasher)
 }
 
-func NewHashingManager(hasherList []Hasher) (*HashingManager, error) {
+func NewHashingManager(hasherList ...Hasher) (*HashingManager, error) {
 	if len(hasherList) == 0 {
 		return nil, fmt.Errorf("hasher list cannot be empty")
 	}
@@ -47,9 +44,11 @@ func NewHashingManager(hasherList []Hasher) (*HashingManager, error) {
 	}, nil
 }
 
-func (m *HashingManager) AddDefaultHasher(hasher Hasher) {
-	m.defaultHasher = hasher
-	m.hasherMap[hasher.Name()] = hasher
+func (m *HashingManager) AddHasher(hasherList ...Hasher) {
+	m.defaultHasher = hasherList[0]
+	for _, hasher := range hasherList {
+		m.hasherMap[hasher.Name()] = hasher
+	}
 }
 
 func (m *HashingManager) HashPassword(password string) (string, error) {
