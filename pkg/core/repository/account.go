@@ -8,7 +8,6 @@ const createAccount = `
 	INSERT INTO gs_account (
 		id,
 		username,
-		email,
 		password_hash,
 		role,
 		language_code,
@@ -18,7 +17,6 @@ const createAccount = `
 	) VALUES (
 		:id,
 		:username,
-		:email,
 		:password_hash,
 		:role,
 		:language_code,

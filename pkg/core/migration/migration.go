@@ -14,15 +14,9 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/sql"
 )
 
-// Run [MigrateAllContext] with a background context.
-func MigrateAll(db *sqlx.DB, appMigrationFS embed.FS) error {
-	ctx := context.Background()
-	return MigrateAllContext(ctx, db, appMigrationFS)
-}
-
-// Run [MigrateContext] with gostarter migrations.
-func MigrateAllContext(ctx context.Context, db *sqlx.DB, appMigrationFS embed.FS) error {
-	return MigrateContext(ctx, db, true, appMigrationFS)
+// Migrate runs the [MigrateContext] with a background context.
+func Migrate(db *sqlx.DB, runGostarterMigration bool, appMigrationFS embed.FS) error {
+	return MigrateContext(context.Background(), db, runGostarterMigration, appMigrationFS)
 }
 
 /*

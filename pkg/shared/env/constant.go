@@ -38,6 +38,7 @@ var (
 	LogLevel                    int
 	LogHealthCheck              bool
 	Port                        string
+	GracefulShutdownTimeoutSec  int
 	CORSOrigins                 string
 	PasswordHashingAlgorithm    string
 	PasswordArgon2idMemory      int
@@ -82,6 +83,7 @@ func MustSetConstants(addPrefix bool) { // TODO: list of warning
 	LogLevel = MustGetInt(prefix("LOG_LEVEL", addPrefix), 0)
 	LogHealthCheck = MustGetBool(prefix("LOG_HEALTH_CHECK", addPrefix), false)
 	Port = MustGetString(prefix("PORT", addPrefix), "3000")
+	GracefulShutdownTimeoutSec = MustGetInt(prefix("GRACEFUL_SHUTDOWN_TIMEOUT_SEC", addPrefix), 30)
 	CORSOrigins = MustGetString(prefix("CORS_ORIGINS", addPrefix), "*")
 	PasswordHashingAlgorithm = MustGetString(prefix("PASSWORD_HASHING_ALGORITHM", addPrefix), PasswordHashingAlgorithmArgon2id)
 	PasswordArgon2idMemory = MustGetInt(prefix("PASSWORD_ARGON2ID_MEMORY", addPrefix), 64*1024)
