@@ -1,4 +1,4 @@
-package server
+package gostarter
 
 import (
 	"embed"
@@ -6,9 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jljl1337/gostarter/pkg/core/cron"
 	"github.com/jljl1337/gostarter/pkg/core/http/common"
-	"github.com/jljl1337/gostarter/pkg/core/http/handler"
 	"github.com/jljl1337/gostarter/pkg/core/http/handler/endpoint"
 	"github.com/jljl1337/gostarter/pkg/core/http/handler/web"
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
@@ -72,18 +70,18 @@ func WithCustomCookieGenerator(cookieGenerator *common.CookieGenerator) Option {
 	}
 }
 
-func WithDefaultScheduler(jobList ...cron.Job) Option {
+func WithDefaultScheduler(jobList ...Job) Option {
 	return func(s *Server) error {
 		schedulerService := serviceCron.NewSchedulerService(s.db)
-		defaultJobList := cron.DefaultSchedulerJobFromEnv(schedulerService)
+		defaultJobList := DefaultSchedulerJobFromEnv(schedulerService)
 
 		return WithScheduler(append(defaultJobList, jobList...)...)(s)
 	}
 }
 
-func WithScheduler(jobList ...cron.Job) Option {
+func WithScheduler(jobList ...Job) Option {
 	return func(s *Server) error {
-		scheduler, err := cron.NewScheduler()
+		scheduler, err := NewScheduler()
 		if err != nil {
 			return err
 		}
@@ -136,16 +134,16 @@ func WithMiddleware(middlewareList ...middleware.Middleware) Option {
 	}
 }
 
-func WithDefaultApiHandler(handlerList ...handler.Handler) Option {
+func WithDefaultApiHandler(handlerList ...Handler) Option {
 	return func(s *Server) error {
 		endpointService := serviceEndpoint.NewEndpointService(s.db, s.idGenerator, s.hashingManager, s.validationManager)
 		endpointHandler := endpoint.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
-		handlerList = append([]handler.Handler{endpointHandler}, handlerList...)
+		handlerList = append([]Handler{endpointHandler}, handlerList...)
 		return WithApiHandler("/api", handlerList...)(s)
 	}
 }
 
-func WithApiHandler(subpath string, handlerList ...handler.Handler) Option {
+func WithApiHandler(subpath string, handlerList ...Handler) Option {
 	return func(s *Server) error {
 		for _, h := range handlerList {
 			h.RegisterRoutes(s.apiMux)
