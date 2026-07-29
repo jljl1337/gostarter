@@ -1,4 +1,4 @@
-package server
+package gostarter
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/jljl1337/gostarter/pkg/core/cron"
 	"github.com/jljl1337/gostarter/pkg/core/http/common"
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
 	"github.com/jljl1337/gostarter/pkg/core/migration"
@@ -40,7 +39,7 @@ type Server struct {
 	port                    string
 	gracefulShutdownTimeout time.Duration
 	httpServer              *http.Server
-	scheduler               *cron.Scheduler
+	scheduler               *Scheduler
 }
 
 func NewServer(db *sqlx.DB, options ...Option) (*Server, error) {
