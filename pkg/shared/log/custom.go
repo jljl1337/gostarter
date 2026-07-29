@@ -6,25 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"time"
-
-	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
-
-/*
-SetCustomLoggerFromEnv sets a custom logger based on the log level defined in
-the environment variables. It uses the slog package to create a new logger with
-a custom handler that formats log messages with a timestamp, log level, and
-message. The log level is set based on the value of env.LogLevel.
-*/
-func SetCustomLoggerFromEnv() error {
-	if !env.ConstantsSet {
-		return fmt.Errorf("environment variables not set, cannot set custom logger")
-	}
-
-	SetCustomLogger(env.LogLevel)
-
-	return nil
-}
 
 /*
 SetCustomLogger sets a custom logger with the specified log level. It uses the
