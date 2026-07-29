@@ -1,4 +1,4 @@
-package gostarter
+package cron
 
 import (
 	"context"

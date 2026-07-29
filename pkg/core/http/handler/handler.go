@@ -1,4 +1,4 @@
-package gostarter
+package handler
 
 import "net/http"
 
