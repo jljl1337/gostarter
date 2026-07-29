@@ -4,17 +4,17 @@ import (
 	"net/http"
 
 	"github.com/jljl1337/gostarter/pkg/core/http/common"
-	"github.com/jljl1337/gostarter/pkg/core/service/endpoint"
+	"github.com/jljl1337/gostarter/pkg/core/service"
 )
 
 type EndpointHandler struct {
-	service         *endpoint.EndpointService
+	service         *service.EndpointService
 	responseHandler *common.ResponseHandler
 	cookieGenerator *common.CookieGenerator
 }
 
 func NewEndpointHandler(
-	service *endpoint.EndpointService,
+	service *service.EndpointService,
 	responseHandler *common.ResponseHandler,
 	cookieGenerator *common.CookieGenerator,
 ) *EndpointHandler {

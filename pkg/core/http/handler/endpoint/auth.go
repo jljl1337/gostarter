@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
-	"github.com/jljl1337/gostarter/pkg/core/service/endpoint"
+	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
 
@@ -51,7 +51,7 @@ func (h *EndpointHandler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.SignUp(r.Context(), endpoint.SignUpParams{
+	if err := h.service.SignUp(r.Context(), service.SignUpParams{
 		Username:     req.Username,
 		Password:     req.Password,
 		LanguageCode: req.LanguageCode,
@@ -106,7 +106,7 @@ func (h *EndpointHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Process the request
-	sessionToken, CSRFToken, err := h.service.SignIn(r.Context(), endpoint.SignInParams{
+	sessionToken, CSRFToken, err := h.service.SignIn(r.Context(), service.SignInParams{
 		PreSessionToken:     preSessionToken.Value,
 		PreSessionCSRFToken: preSessionCSRFToken,
 		Username:            req.Username,

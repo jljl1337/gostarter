@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-co-op/gocron/v2"
 
-	"github.com/jljl1337/gostarter/pkg/core/service/cron"
+	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
@@ -57,7 +57,7 @@ func (s *Scheduler) Shutdown(ctx context.Context) error {
 	return s.scheduler.ShutdownWithContext(ctx)
 }
 
-func DefaultSchedulerJobFromEnv(schedulerService *cron.SchedulerService) []Job {
+func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Job {
 	var jobList []Job
 
 	// Database backup job (only for SQLite)
@@ -82,7 +82,7 @@ func DefaultSchedulerJobFromEnv(schedulerService *cron.SchedulerService) []Job {
 	return jobList
 }
 
-func SQLiteBackupJob(schedulerService *cron.SchedulerService) Job {
+func SQLiteBackupJob(schedulerService *service.SchedulerService) Job {
 	return Job{
 		CronSchedule: env.SQLiteBackupCronSchedule,
 		WithSeconds:  false,
@@ -101,7 +101,7 @@ func SQLiteBackupJob(schedulerService *cron.SchedulerService) Job {
 	}
 }
 
-func SessionCleanupJob(schedulerService *cron.SchedulerService) Job {
+func SessionCleanupJob(schedulerService *service.SchedulerService) Job {
 	return Job{
 		CronSchedule: env.SessionCleanupCronSchedule,
 		WithSeconds:  false,

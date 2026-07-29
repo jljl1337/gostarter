@@ -13,8 +13,6 @@ import (
 	"github.com/jljl1337/gostarter/pkg/core/http/handler/web"
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
 	"github.com/jljl1337/gostarter/pkg/core/service"
-	serviceCron "github.com/jljl1337/gostarter/pkg/core/service/cron"
-	serviceEndpoint "github.com/jljl1337/gostarter/pkg/core/service/endpoint"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/validation"
 )
@@ -74,7 +72,7 @@ func WithCustomCookieGenerator(cookieGenerator *common.CookieGenerator) Option {
 
 func WithDefaultScheduler(jobList ...cron.Job) Option {
 	return func(s *Server) error {
-		schedulerService := serviceCron.NewSchedulerService(s.db)
+		schedulerService := service.NewSchedulerService(s.db)
 		defaultJobList := cron.DefaultSchedulerJobFromEnv(schedulerService)
 
 		return WithScheduler(append(defaultJobList, jobList...)...)(s)
@@ -138,7 +136,7 @@ func WithMiddleware(middlewareList ...middleware.Middleware) Option {
 
 func WithDefaultApiHandler(handlerList ...handler.Handler) Option {
 	return func(s *Server) error {
-		endpointService := serviceEndpoint.NewEndpointService(s.db, s.idGenerator, s.hashingManager, s.validationManager)
+		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, s.validationManager)
 		endpointHandler := endpoint.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
 		handlerList = append([]handler.Handler{endpointHandler}, handlerList...)
 		return WithApiHandler("/api", handlerList...)(s)

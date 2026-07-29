@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
-	"github.com/jljl1337/gostarter/pkg/core/service/endpoint"
+	"github.com/jljl1337/gostarter/pkg/core/service"
 )
 
 type getCurrentAccountResponse struct {
@@ -64,7 +64,7 @@ func (h *EndpointHandler) updateUsername(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.service.UpdateUsernameByID(r.Context(), endpoint.UpdateUsernameByIDParams{
+	if err := h.service.UpdateUsernameByID(r.Context(), service.UpdateUsernameByIDParams{
 		Account:     *account,
 		NewUsername: req.NewUsername,
 	}); err != nil {
@@ -98,7 +98,7 @@ func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.service.UpdatePasswordByID(r.Context(), endpoint.UpdatePasswordByIDParams{
+	if err := h.service.UpdatePasswordByID(r.Context(), service.UpdatePasswordByIDParams{
 		Account:     *account,
 		OldPassword: req.OldPassword,
 		NewPassword: req.NewPassword,
@@ -132,7 +132,7 @@ func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.service.UpdateLanguageByID(r.Context(), endpoint.UpdateLanguageByIDParams{
+	if err := h.service.UpdateLanguageByID(r.Context(), service.UpdateLanguageByIDParams{
 		Account:      *account,
 		LanguageCode: req.LanguageCode,
 	}); err != nil {
