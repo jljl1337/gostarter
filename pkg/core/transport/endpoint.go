@@ -1,22 +1,21 @@
-package endpoint
+package transport
 
 import (
 	"net/http"
 
-	"github.com/jljl1337/gostarter/pkg/core/http/common"
-	"github.com/jljl1337/gostarter/pkg/core/service/endpoint"
+	"github.com/jljl1337/gostarter/pkg/core/service"
 )
 
 type EndpointHandler struct {
-	service         *endpoint.EndpointService
-	responseHandler *common.ResponseHandler
-	cookieGenerator *common.CookieGenerator
+	service         *service.EndpointService
+	responseHandler *ResponseHandler
+	cookieGenerator *CookieGenerator
 }
 
 func NewEndpointHandler(
-	service *endpoint.EndpointService,
-	responseHandler *common.ResponseHandler,
-	cookieGenerator *common.CookieGenerator,
+	service *service.EndpointService,
+	responseHandler *ResponseHandler,
+	cookieGenerator *CookieGenerator,
 ) *EndpointHandler {
 	return &EndpointHandler{
 		service:         service,

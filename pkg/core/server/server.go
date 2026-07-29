@@ -14,9 +14,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
-	"github.com/jljl1337/gostarter/pkg/core/http/common"
-	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
 	"github.com/jljl1337/gostarter/pkg/core/migration"
+	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
@@ -32,11 +31,11 @@ type Server struct {
 	idGenerator             func() string
 	hashingManager          *crypto.HashingManager
 	validationManager       *validation.ValidationManager
-	responseHandler         *common.ResponseHandler
-	cookieGenerator         *common.CookieGenerator
+	responseHandler         *transport.ResponseHandler
+	cookieGenerator         *transport.CookieGenerator
 	apiMux                  *http.ServeMux
 	mux                     *http.ServeMux
-	apiMiddleware           middleware.Middleware
+	apiMiddleware           transport.Middleware
 	port                    string
 	gracefulShutdownTimeout time.Duration
 	httpServer              *http.Server
@@ -64,8 +63,8 @@ func NewServer(db *sqlx.DB, options ...Option) (*Server, error) {
 		idGenerator:             generator.NewULID,
 		hashingManager:          hashingManager,
 		validationManager:       validationManager,
-		responseHandler:         common.NewDefaultResponseHandler(),
-		cookieGenerator:         common.NewCookieGeneratorFromEnv(),
+		responseHandler:         transport.NewDefaultResponseHandler(),
+		cookieGenerator:         transport.NewCookieGeneratorFromEnv(),
 	}
 
 	for _, option := range options {
