@@ -1,10 +1,9 @@
-package endpoint
+package transport
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 )
 
@@ -26,7 +25,7 @@ func (h *EndpointHandler) registerAccountRoutes(mux *http.ServeMux) {
 
 func (h *EndpointHandler) getCurrentAccount(w http.ResponseWriter, r *http.Request) {
 	// Process the request
-	account := middleware.GetAccountFromContext(r.Context())
+	account := GetAccountFromContext(r.Context())
 	if account == nil {
 		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
@@ -58,7 +57,7 @@ func (h *EndpointHandler) updateUsername(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Process the request
-	account := middleware.GetAccountFromContext(r.Context())
+	account := GetAccountFromContext(r.Context())
 	if account == nil {
 		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
@@ -92,7 +91,7 @@ func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Process the request
-	account := middleware.GetAccountFromContext(r.Context())
+	account := GetAccountFromContext(r.Context())
 	if account == nil {
 		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
@@ -126,7 +125,7 @@ func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Process the request
-	account := middleware.GetAccountFromContext(r.Context())
+	account := GetAccountFromContext(r.Context())
 	if account == nil {
 		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return
@@ -146,7 +145,7 @@ func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request)
 
 func (h *EndpointHandler) deleteCurrentAccount(w http.ResponseWriter, r *http.Request) {
 	// Process the request
-	account := middleware.GetAccountFromContext(r.Context())
+	account := GetAccountFromContext(r.Context())
 	if account == nil {
 		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return

@@ -7,12 +7,8 @@ import (
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
-	"github.com/jljl1337/gostarter/pkg/core/http/common"
-	"github.com/jljl1337/gostarter/pkg/core/http/handler"
-	"github.com/jljl1337/gostarter/pkg/core/http/handler/endpoint"
-	"github.com/jljl1337/gostarter/pkg/core/http/handler/web"
-	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
 	"github.com/jljl1337/gostarter/pkg/core/service"
+	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/validation"
 )
@@ -56,14 +52,14 @@ func WithCustomValidationManager(validationManager *validation.ValidationManager
 	}
 }
 
-func WithCustomResponseHandler(responseHandler *common.ResponseHandler) Option {
+func WithCustomResponseHandler(responseHandler *transport.ResponseHandler) Option {
 	return func(s *Server) error {
 		s.responseHandler = responseHandler
 		return nil
 	}
 }
 
-func WithCustomCookieGenerator(cookieGenerator *common.CookieGenerator) Option {
+func WithCustomCookieGenerator(cookieGenerator *transport.CookieGenerator) Option {
 	return func(s *Server) error {
 		s.cookieGenerator = cookieGenerator
 		return nil
@@ -112,7 +108,7 @@ func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 
 func WithStaticSite(path string, siteFs fs.FS) Option {
 	return func(s *Server) error {
-		webHandler := web.NewWebHandler(path, siteFs)
+		webHandler := transport.NewWebHandler(path, siteFs)
 		webHandler.RegisterRoutes(s.mux)
 
 		return nil
@@ -122,28 +118,28 @@ func WithStaticSite(path string, siteFs fs.FS) Option {
 func WithDefaultMiddleware() Option {
 	return func(s *Server) error {
 		middlewareService := service.NewMiddlewareService(s.db)
-		middlewareProvider := middleware.NewMiddlewareProvider(middlewareService, s.responseHandler)
+		middlewareProvider := transport.NewMiddlewareProvider(middlewareService, s.responseHandler)
 		return WithMiddleware(middlewareProvider.GetMiddlewareList()...)(s)
 	}
 }
 
-func WithMiddleware(middlewareList ...middleware.Middleware) Option {
+func WithMiddleware(middlewareList ...transport.Middleware) Option {
 	return func(s *Server) error {
-		s.apiMiddleware = middleware.CreateStack(middlewareList...)
+		s.apiMiddleware = transport.CreateStack(middlewareList...)
 		return nil
 	}
 }
 
-func WithDefaultApiHandler(handlerList ...handler.Handler) Option {
+func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
 		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, s.validationManager)
-		endpointHandler := endpoint.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
-		handlerList = append([]handler.Handler{endpointHandler}, handlerList...)
+		endpointHandler := transport.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
+		handlerList = append([]transport.Handler{endpointHandler}, handlerList...)
 		return WithApiHandler("/api", handlerList...)(s)
 	}
 }
 
-func WithApiHandler(subpath string, handlerList ...handler.Handler) Option {
+func WithApiHandler(subpath string, handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
 		for _, h := range handlerList {
 			h.RegisterRoutes(s.apiMux)

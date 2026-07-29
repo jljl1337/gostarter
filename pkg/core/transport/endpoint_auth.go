@@ -1,10 +1,9 @@
-package endpoint
+package transport
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/jljl1337/gostarter/pkg/core/http/middleware"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
@@ -148,7 +147,7 @@ func (h *EndpointHandler) signOut(w http.ResponseWriter, r *http.Request) {
 func (h *EndpointHandler) signOutAll(w http.ResponseWriter, r *http.Request) {
 	// Process the request
 	ctx := r.Context()
-	account := middleware.GetAccountFromContext(ctx)
+	account := GetAccountFromContext(ctx)
 	if account == nil {
 		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
 		return

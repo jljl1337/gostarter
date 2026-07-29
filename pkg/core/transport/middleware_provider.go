@@ -1,18 +1,17 @@
-package middleware
+package transport
 
 import (
-	"github.com/jljl1337/gostarter/pkg/core/http/common"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 )
 
 // MiddlewareProvider contains all middleware functions
 type MiddlewareProvider struct {
 	service         *service.MiddlewareService
-	responseHandler *common.ResponseHandler
+	responseHandler *ResponseHandler
 }
 
 // NewMiddlewareProvider creates a new middleware provider
-func NewMiddlewareProvider(service *service.MiddlewareService, responseHandler *common.ResponseHandler) *MiddlewareProvider {
+func NewMiddlewareProvider(service *service.MiddlewareService, responseHandler *ResponseHandler) *MiddlewareProvider {
 	return &MiddlewareProvider{
 		service:         service,
 		responseHandler: responseHandler,
