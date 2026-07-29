@@ -21,6 +21,7 @@ func NewMiddlewareProvider(service *service.MiddlewareService, responseHandler *
 
 func (p *MiddlewareProvider) GetMiddlewareList() []Middleware {
 	return []Middleware{
+		p.Recovery(),
 		p.CORS(),
 		p.Logging(),
 		p.Auth(),
