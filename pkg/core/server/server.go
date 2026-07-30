@@ -1,4 +1,4 @@
-package gostarter
+package server
 
 import (
 	"context"
