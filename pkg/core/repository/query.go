@@ -26,6 +26,18 @@ type Queries struct {
 }
 
 func (q *Queries) NamedGetContext(ctx context.Context, dest any, query string, arg any) error {
+	return q.selectOneContext(ctx, dest, func(ctx context.Context, results any) error {
+		return q.NamedSelectContext(ctx, results, query, arg)
+	})
+}
+
+func (q *Queries) GetContext(ctx context.Context, dest any, query string, args ...any) error {
+	return q.selectOneContext(ctx, dest, func(ctx context.Context, results any) error {
+		return q.SelectContext(ctx, results, query, args...)
+	})
+}
+
+func (q *Queries) selectOneContext(ctx context.Context, dest any, selectFn func(context.Context, any) error) error {
 	// dest must be a non-nil pointer
 	destVal := reflect.ValueOf(dest)
 	if destVal.Kind() != reflect.Pointer || destVal.IsNil() {
@@ -36,8 +48,7 @@ func (q *Queries) NamedGetContext(ctx context.Context, dest any, query string, a
 	sliceType := reflect.SliceOf(destVal.Elem().Type())
 	resultsPtr := reflect.New(sliceType)
 
-	err := q.NamedSelectContext(ctx, resultsPtr.Interface(), query, arg)
-	if err != nil {
+	if err := selectFn(ctx, resultsPtr.Interface()); err != nil {
 		return err
 	}
 
@@ -49,10 +60,6 @@ func (q *Queries) NamedGetContext(ctx context.Context, dest any, query string, a
 	// Copy the single result into dest
 	destVal.Elem().Set(results.Index(0))
 	return nil
-}
-
-func (q *Queries) GetContext(ctx context.Context, dest any, query string, args ...any) error {
-	return sqlx.GetContext(ctx, q.db, dest, query, args...)
 }
 
 func (q *Queries) NamedSelectContext(ctx context.Context, dest any, query string, arg any) error {
