@@ -1,7 +1,8 @@
-package gostarter
+package server
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"time"
@@ -106,9 +107,12 @@ func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 	}
 }
 
-func WithStaticSite(path string, siteFs fs.FS) Option {
+func WithStaticSite(path string, siteFs fs.FS, subPath string) Option {
 	return func(s *Server) error {
-		webHandler := transport.NewWebHandler(path, siteFs)
+		webHandler, err := transport.NewWebHandler(path, siteFs, subPath)
+		if err != nil {
+			return fmt.Errorf("failed to create web handler: %w", err)
+		}
 		webHandler.RegisterRoutes(s.mux)
 
 		return nil
