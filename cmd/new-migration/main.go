@@ -39,7 +39,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error creating migration up file: %v\n", err)
 		os.Exit(1)
 	}
-	fileUp.Close()
+
+	if err = fileUp.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error closing migration up file: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Create the migration down file
 	fileDown, err := os.Create(migrationDownFile)
@@ -47,7 +51,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error creating migration down file: %v\n", err)
 		os.Exit(1)
 	}
-	fileDown.Close()
+
+	if err = fileDown.Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error closing migration down file: %v\n", err)
+		os.Exit(1)
+	}
 
 	fmt.Printf("Created migration files:\n  %s\n  %s\n", migrationUpFile, migrationDownFile)
 }
