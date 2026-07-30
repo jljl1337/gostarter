@@ -195,5 +195,7 @@ data to the HTTP response writer.
 func (rh *ResponseHandler) WriteJSONResponse(w http.ResponseWriter, statusCode int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Errorf("Failed to write JSON response: %v", err)
+	}
 }
