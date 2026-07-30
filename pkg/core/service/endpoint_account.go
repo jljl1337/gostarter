@@ -85,7 +85,7 @@ func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePass
 
 	queries := repository.NewQueries(tx)
 
-	valid, err := s.hashingManager.ComparePassword(arg.OldPassword, arg.Account.PasswordHash)
+	valid, err := s.hashingManager.ComparePassword(arg.Account.PasswordHash, arg.OldPassword)
 	if err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to compare passwords: %v", err)
 	}

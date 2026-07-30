@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/argon2"
 
@@ -160,10 +161,17 @@ version, memory, iterations, parallelism, salt, and hash bytes. It returns
 an error if the hash format is invalid.
 */
 func (h *Argon2idHasher) SplitHash(hash string) (version int, memory, iterations uint32, parallelism uint8, salt, hashBytes []byte, err error) {
-	_, err = fmt.Sscanf(hash, "$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", &version, &memory, &iterations, &parallelism, &salt, &hashBytes)
-	if err != nil {
-		return 0, 0, 0, 0, nil, nil, fmt.Errorf("failed to parse hash: %w", err)
+	parts := strings.Split(hash, "$")
+	if len(parts) != 6 || parts[1] != "argon2id" {
+		return 0, 0, 0, 0, nil, nil, fmt.Errorf("failed to parse hash: invalid argon2id format")
 	}
 
-	return version, memory, iterations, parallelism, salt, hashBytes, nil
+	if _, err = fmt.Sscanf(parts[2], "v=%d", &version); err != nil {
+		return 0, 0, 0, 0, nil, nil, fmt.Errorf("failed to parse hash version: %w", err)
+	}
+	if _, err = fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &iterations, &parallelism); err != nil {
+		return 0, 0, 0, 0, nil, nil, fmt.Errorf("failed to parse hash parameters: %w", err)
+	}
+
+	return version, memory, iterations, parallelism, []byte(parts[4]), []byte(parts[5]), nil
 }
