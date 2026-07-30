@@ -28,7 +28,7 @@ type Queries struct {
 func (q *Queries) NamedGetContext(ctx context.Context, dest any, query string, arg any) error {
 	// dest must be a non-nil pointer
 	destVal := reflect.ValueOf(dest)
-	if destVal.Kind() != reflect.Ptr || destVal.IsNil() {
+	if destVal.Kind() != reflect.Pointer || destVal.IsNil() {
 		return fmt.Errorf("dest must be a non-nil pointer")
 	}
 
@@ -51,7 +51,7 @@ func (q *Queries) NamedGetContext(ctx context.Context, dest any, query string, a
 	return nil
 }
 
-func (q *Queries) GetContext(ctx context.Context, dest any, query string, args ...interface{}) error {
+func (q *Queries) GetContext(ctx context.Context, dest any, query string, args ...any) error {
 	return sqlx.GetContext(ctx, q.db, dest, query, args...)
 }
 
@@ -63,7 +63,7 @@ func (q *Queries) NamedSelectContext(ctx context.Context, dest any, query string
 	return q.SelectContext(ctx, dest, query, args...)
 }
 
-func (q *Queries) SelectContext(ctx context.Context, dest any, query string, args ...interface{}) error {
+func (q *Queries) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
 	return sqlx.SelectContext(ctx, q.db, dest, query, args...)
 }
 
@@ -92,7 +92,7 @@ func (q *Queries) NamedExecRowsAffectedContext(ctx context.Context, query string
 	return result.RowsAffected()
 }
 
-func (q *Queries) ExecRowsAffectedContext(ctx context.Context, query string, args ...interface{}) (int64, error) {
+func (q *Queries) ExecRowsAffectedContext(ctx context.Context, query string, args ...any) (int64, error) {
 	result, err := q.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
@@ -100,6 +100,6 @@ func (q *Queries) ExecRowsAffectedContext(ctx context.Context, query string, arg
 	return result.RowsAffected()
 }
 
-func (q *Queries) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+func (q *Queries) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	return q.db.ExecContext(ctx, query, args...)
 }
