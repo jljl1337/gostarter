@@ -10,34 +10,56 @@ import (
 )
 
 /*
+Queries is a struct extends [Queryer] and provides methods to execute
+predefined queries.
+
+Use this struct when you are using any predefined queries.
+*/
+type Queries struct {
+	Queryer
+}
+
+/*
 NewQueries creates a new Queries instance with the provided database
 connection. It returns a pointer to Queries.
 */
 func NewQueries(db sqlx.ExtContext) *Queries {
-	return &Queries{db: db}
+	return &Queries{
+		Queryer: *NewQueryer(db),
+	}
 }
 
 /*
-Queries is a struct that holds the database connection and provides methods
-to execute queries.
+Queryer is a struct that holds the database connection and provides basic
+methods to execute queries.
+
+Use this struct when you are not using any predefined queries.
 */
-type Queries struct {
+type Queryer struct {
 	db sqlx.ExtContext
 }
 
-func (q *Queries) NamedGetContext(ctx context.Context, dest any, query string, arg any) error {
+/*
+NewQueryer creates a new Queryer instance with the provided database
+connection. It returns a pointer to Queryer.
+*/
+func NewQueryer(db sqlx.ExtContext) *Queryer {
+	return &Queryer{db: db}
+}
+
+func (q *Queryer) NamedGetContext(ctx context.Context, dest any, query string, arg any) error {
 	return q.selectOneContext(ctx, dest, func(ctx context.Context, results any) error {
 		return q.NamedSelectContext(ctx, results, query, arg)
 	})
 }
 
-func (q *Queries) GetContext(ctx context.Context, dest any, query string, args ...any) error {
+func (q *Queryer) GetContext(ctx context.Context, dest any, query string, args ...any) error {
 	return q.selectOneContext(ctx, dest, func(ctx context.Context, results any) error {
 		return q.SelectContext(ctx, results, query, args...)
 	})
 }
 
-func (q *Queries) selectOneContext(ctx context.Context, dest any, selectFn func(context.Context, any) error) error {
+func (q *Queryer) selectOneContext(ctx context.Context, dest any, selectFn func(context.Context, any) error) error {
 	// dest must be a non-nil pointer
 	destVal := reflect.ValueOf(dest)
 	if destVal.Kind() != reflect.Pointer || destVal.IsNil() {
@@ -62,7 +84,7 @@ func (q *Queries) selectOneContext(ctx context.Context, dest any, selectFn func(
 	return nil
 }
 
-func (q *Queries) NamedSelectContext(ctx context.Context, dest any, query string, arg any) error {
+func (q *Queryer) NamedSelectContext(ctx context.Context, dest any, query string, arg any) error {
 	query, args, err := q.db.BindNamed(query, arg)
 	if err != nil {
 		return err
@@ -70,11 +92,11 @@ func (q *Queries) NamedSelectContext(ctx context.Context, dest any, query string
 	return q.SelectContext(ctx, dest, query, args...)
 }
 
-func (q *Queries) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
+func (q *Queryer) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
 	return sqlx.SelectContext(ctx, q.db, dest, query, args...)
 }
 
-func (q *Queries) NamedExecOneRowContext(ctx context.Context, query string, arg any) error {
+func (q *Queryer) NamedExecOneRowContext(ctx context.Context, query string, arg any) error {
 	rows, err := q.NamedExecRowsAffectedContext(ctx, query, arg)
 	if err != nil {
 		return err
@@ -87,7 +109,7 @@ func (q *Queries) NamedExecOneRowContext(ctx context.Context, query string, arg 
 	return nil
 }
 
-func (q *Queries) NamedExecRowsAffectedContext(ctx context.Context, query string, arg any) (int64, error) {
+func (q *Queryer) NamedExecRowsAffectedContext(ctx context.Context, query string, arg any) (int64, error) {
 	query, args, err := q.db.BindNamed(query, arg)
 	if err != nil {
 		return 0, err
@@ -99,7 +121,7 @@ func (q *Queries) NamedExecRowsAffectedContext(ctx context.Context, query string
 	return result.RowsAffected()
 }
 
-func (q *Queries) ExecRowsAffectedContext(ctx context.Context, query string, args ...any) (int64, error) {
+func (q *Queryer) ExecRowsAffectedContext(ctx context.Context, query string, args ...any) (int64, error) {
 	result, err := q.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
@@ -107,6 +129,6 @@ func (q *Queries) ExecRowsAffectedContext(ctx context.Context, query string, arg
 	return result.RowsAffected()
 }
 
-func (q *Queries) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+func (q *Queryer) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	return q.db.ExecContext(ctx, query, args...)
 }
