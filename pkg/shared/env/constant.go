@@ -92,7 +92,7 @@ func MustSetConstants(addPrefix bool) { // TODO: list of warning
 	PasswordArgon2idSaltLength = MustGetInt(prefix("PASSWORD_ARGON2ID_SALT_LENGTH", addPrefix), 16)
 	PasswordArgon2idKeyLength = MustGetInt(prefix("PASSWORD_ARGON2ID_KEY_LENGTH", addPrefix), 32)
 	PasswordBcryptCost = MustGetInt(prefix("PASSWORD_BCRYPT_COST", addPrefix), 12)
-	SessionCookieName = MustGetString(prefix("SESSION_COOKIE_NAME", addPrefix), "issho_session_token")
+	SessionCookieName = MustGetString(prefix("SESSION_COOKIE_NAME", addPrefix), "session_token")
 	SessionCookieHttpOnly = MustGetBool(prefix("SESSION_COOKIE_HTTP_ONLY", addPrefix), true)
 	SessionCookieSecure = MustGetBool(prefix("SESSION_COOKIE_SECURE", addPrefix), false)
 	sessionCookieSameSite := MustGetString(prefix("SESSION_COOKIE_SAME_SITE", addPrefix), "lax")
