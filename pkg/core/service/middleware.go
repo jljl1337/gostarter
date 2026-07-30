@@ -23,7 +23,13 @@ func NewMiddlewareService(db *sqlx.DB) *MiddlewareService {
 }
 
 func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Context, sessionToken, CSRFToken string) (*repository.Account, error) {
-	queries := repository.NewQueries(s.db)
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	queries := repository.NewQueries(tx)
 
 	sessions, err := queries.GetSessionByToken(ctx, sessionToken)
 
@@ -81,6 +87,10 @@ func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Conte
 	account, err := queries.GetAccountByID(ctx, *session.AccountID)
 	if err != nil {
 		return nil, NewServiceErrorf(ErrCodeInternal, "failed to get account by ID: %v", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
 	return &account, nil
