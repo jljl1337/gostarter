@@ -110,7 +110,7 @@ func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
 		}
 
 		// Read the migration file
-		statementBytes, err := sql.MigrationDir.ReadFile("migration/" + filename)
+		statementBytes, err := fs.ReadFile("migration/" + filename)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read migration file %s: %w", filename, err)
 		}
