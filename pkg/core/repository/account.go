@@ -11,7 +11,6 @@ const createAccount = `
 		password_hash,
 		role,
 		language_code,
-		is_verified,
 		created_at,
 		updated_at
 	) VALUES (
@@ -20,7 +19,6 @@ const createAccount = `
 		:password_hash,
 		:role,
 		:language_code,
-		:is_verified,
 		:created_at,
 		:updated_at
 	)
