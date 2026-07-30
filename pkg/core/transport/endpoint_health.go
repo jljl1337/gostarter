@@ -2,6 +2,8 @@ package transport
 
 import (
 	"net/http"
+
+	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
 
 func (h *EndpointHandler) registerHealthCheckRoutes(mux *http.ServeMux) {
@@ -10,5 +12,7 @@ func (h *EndpointHandler) registerHealthCheckRoutes(mux *http.ServeMux) {
 
 func (h *EndpointHandler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	if _, err := w.Write([]byte("OK")); err != nil {
+		log.Errorf("Failed to write health check response: %v", err)
+	}
 }

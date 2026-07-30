@@ -115,7 +115,9 @@ func (s *Server) Start() error {
 
 	if s.runMigrations {
 		log.Info("Running migrations")
-		migration.Migrate(s.db, s.runGostarterMigrations, s.appMigrationFS)
+		if err := migration.Migrate(s.db, s.runGostarterMigrations, s.appMigrationFS); err != nil {
+			return fmt.Errorf("failed to run migrations: %w", err)
+		}
 	}
 
 	if s.scheduler != nil {
