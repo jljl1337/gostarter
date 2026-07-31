@@ -36,3 +36,11 @@ duration from now.
 func DurationFromNowISO8601(duration time.Duration) string {
 	return format.TimeToISO8601(time.Now().Add(duration))
 }
+
+func MinutesBeforeNowISO8601(minutes int) string {
+	return DurationBeforeNowISO8601(time.Duration(minutes) * time.Minute)
+}
+
+func DurationBeforeNowISO8601(duration time.Duration) string {
+	return format.TimeToISO8601(time.Now().Add(-duration))
+}
