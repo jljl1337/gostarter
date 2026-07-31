@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:3000
+@username = 12341234
+@password = 123412341234
+@sessionToken = Nqrc1qERDqJkW82EcJdVMOK5H28ogocC
+@csrfToken = irshBJIzCVbU5ZFLKPbxDfpc5Vy4jlSu
+
+############################## Health
+
+GET {{baseUrl}}/api/health
+
+############################## Meta
+
+GET {{baseUrl}}/api/meta
+
+################################ Auth
+
+POST {{baseUrl}}/api/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "languageCode": "en-US"
+}
+
+###
+
+POST {{baseUrl}}/api/auth/pre-session
+
+###
+
+POST {{baseUrl}}/api/auth/sign-in
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+###
+
+POST {{baseUrl}}/api/auth/sign-out
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
+
+###
+
+POST {{baseUrl}}/api/auth/sign-out-all
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
+
+###
+
+GET {{baseUrl}}/api/auth/csrf-token
+Cookie: session_token={{sessionToken}}
+
+############################ User
+
+GET {{baseUrl}}/api/accounts/me
+Cookie: session_token={{sessionToken}}
+
+###
+
+PATCH {{baseUrl}}/api/accounts/me/username
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "newUsername": "12341234"
+}
+
+###
+
+DELETE {{baseUrl}}/api/accounts/me
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
