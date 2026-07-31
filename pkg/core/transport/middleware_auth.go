@@ -17,7 +17,7 @@ func (m *MiddlewareProvider) Auth() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip for public routes
 			publicRoutes := map[string]bool{
-				"/version":          true,
+				"/meta":             true,
 				"/health":           true,
 				"/auth/sign-up":     true,
 				"/auth/pre-session": true,
