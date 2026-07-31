@@ -1,0 +1,16 @@
+services:
+  pg:
+    image: postgres:alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: gostarter_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/pg:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d gostarter_db"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
