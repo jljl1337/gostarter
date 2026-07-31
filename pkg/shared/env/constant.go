@@ -67,6 +67,7 @@ var (
 func MustSetConstants(addPrefix bool) { // TODO: list of warning
 	MustLoadOptionalEnvFile()
 
+	databaseDriver := MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
 	DataDir = MustGetString(prefix("DATA_DIR", addPrefix), "data")
 	LiveDataDir = MustGetString(prefix("LIVE_DATA_DIR", addPrefix), "live")
 	BackupDataDir = MustGetString(prefix("BACKUP_DATA_DIR", addPrefix), "backup")
@@ -74,7 +75,6 @@ func MustSetConstants(addPrefix bool) { // TODO: list of warning
 	LiveSQLiteFileName = MustGetString(prefix("LIVE_SQLITE_FILE_NAME", addPrefix), "live.db")
 	EnableSQLiteBackup = MustGetBool(prefix("ENABLE_SQLITE_BACKUP", addPrefix), true)
 	BackupSQLiteFileName = MustGetString(prefix("BACKUP_SQLITE_FILE_NAME", addPrefix), "backup.db")
-	databaseDriver := MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
 	PostgresURL = MustGetString(prefix("POSTGRES_URL", addPrefix), "")
 	SQLiteDbBusyTimeout = MustGetString(prefix("SQLITE_BUSY_TIMEOUT", addPrefix), "30000")
 	SQLiteBackupCronSchedule = MustGetString(prefix("SQLITE_BACKUP_CRON_SCHEDULE", addPrefix), "0 0 * * *")
