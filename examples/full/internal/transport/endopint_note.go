@@ -8,10 +8,10 @@ import (
 )
 
 func (h *EndpointHandler) registerNoteRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /note", h.createNote)
-	mux.HandleFunc("GET /note", h.getNotesOfAccount)
-	mux.HandleFunc("PUT /note/{id}", h.updateNoteByID)
-	mux.HandleFunc("DELETE /note/{id}", h.deleteNoteByID)
+	mux.HandleFunc("POST /notes", h.createNote)
+	mux.HandleFunc("GET /notes", h.getNotesOfAccount)
+	mux.HandleFunc("PUT /notes/{id}", h.updateNoteByID)
+	mux.HandleFunc("DELETE /notes/{id}", h.deleteNoteByID)
 }
 
 func (h *EndpointHandler) createNote(w http.ResponseWriter, r *http.Request) {
