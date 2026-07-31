@@ -27,5 +27,5 @@ func NewPostgreSQLDB(url string) (*sqlx.DB, error) {
 	if url == "" {
 		return nil, fmt.Errorf("PostgreSQL URL is missing")
 	}
-	return sqlx.Open("postgres", url)
+	return sqlx.Open("pgx", url)
 }
