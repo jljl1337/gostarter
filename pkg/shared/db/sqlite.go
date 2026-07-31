@@ -37,6 +37,7 @@ func NewSQLiteDB(path, busyTimeout string) (*sqlx.DB, error) {
 	dsn := "file:" + path
 	dsn = dsn + "?_journal=WAL"
 	dsn = dsn + "&_foreign_keys=true"
+	dsn = dsn + "&_txlock=immediate"
 	dsn = dsn + "&_busy_timeout=" + busyTimeout
 	return sqlx.Open("sqlite3", dsn)
 }
