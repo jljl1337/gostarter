@@ -3,35 +3,31 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/jljl1337/gostarter.svg)](https://pkg.go.dev/github.com/jljl1337/gostarter)
 
 - Batteries included, offers cron jobs, backups and more.
-- Configurable, either full on setup, or just basic tables, or even build from
-  scratch.
-- Infrastructure independent, works with both monolith and microservice
-  architecture.
+- Configurable, either full on setup, or table only, or even build from scratch.
+- Infrastructure independent, from one binary for each sidecar to one binary for
+  the entire backend.
 - Compatible with SQLite and PostgreSQL.
 
 ## What is gostarter?
 
-gostarter is a package aiming to provide useful components to create a monolith
-backend server. That said, gostarter can also be configured to act as just a
-Restful API server or a sidecar application if you are adopting a microservice
-architecture.
+gostarter is a package aiming to provide useful components to create an easy to
+manage monolith backend server, while still being possible to configured to act
+as just a API server or a sidecar application if you want to separate your
+backend into numerous processes or servers.
 
 ## Why not PocketBase (or other alternatives)?
 
 ### PocketBase
 
-PocketBase assumes you to use the record and collection operations instead of
-messing with raw SQL queries, which works very well for many cases. That said,
-you may still want to go around the API and extend the app for your use case
-from time to time. If this happens again and again, starting from scratch could
-be a better option.
+Before looking at gostarter, make sure to check out PocketBase, as it is still a
+more actively maintained and more mature product. In many cases, PocketBase is a
+much better choice overall.
 
-If you also find the API of PocketBase a bit limiting, you can also explore the
-option of adopting this package, as it provides many commonly used components,
-while still offer enough flexibility for different kinds of applications.
-
-All these aside, make sure to check out PocketBase before looking at gostarter,
-as it is still a more actively maintained and more mature product.
+By default, PocketBase assumes you to use the record and collection operations
+instead of messing with raw SQL queries, which works very well for many cases.
+Even though you can still execute raw SQL queries, you are then missing a lot of
+features of using PocketBase as a framework. Also, if you want to separate the
+backend into several binary, or use other SQL engine, you are out of luck.
 
 ### Supabase
 
