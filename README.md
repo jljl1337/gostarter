@@ -1,5 +1,7 @@
 # gostarter
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/jljl1337/gostarter.svg)](https://pkg.go.dev/github.com/jljl1337/gostarter)
+
 - Batteries included, offers cron jobs, backups and more.
 - Configurable, either full on setup, or just basic tables, or even build from
   scratch.
