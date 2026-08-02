@@ -3,12 +3,12 @@ set -euo pipefail
 
 app_pids=()
 start_pwd=$(pwd)
+exit_code=0
 
 cleanup() {
     cd "$start_pwd"
 
     echo "Cleaning up application processes..."
-	local exit_code=$?
 
     echo "Shutting down the database compose..."
 	docker compose -f "test/pg.compose.yml" down
@@ -60,5 +60,7 @@ cd test
 echo "Running the tests..."
 set +e
 pnpm exec playwright test
+exit_code=$?
 set -e
+
 cd ..
