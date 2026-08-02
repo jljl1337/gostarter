@@ -36,10 +36,5 @@ export default defineConfig({
       name: 'postgres',
       use: { baseURL: 'http://localhost:3001' },
     },
-
-    {
-      name: 'mysql',
-      use: { baseURL: 'http://localhost:3002' },
-    },
   ],
 });
