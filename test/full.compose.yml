@@ -1,5 +1,0 @@
-name: full-db
-
-include:
-  - pg.compose.yml
-  - mysql.compose.yml

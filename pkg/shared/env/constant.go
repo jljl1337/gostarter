@@ -5,7 +5,6 @@ import "net/http"
 const (
 	DatabaseDriverSQLite             = "sqlite"
 	DatabaseDriverPostgreSQL         = "postgresql"
-	DatabaseDriverMySQL              = "mysql"
 	PasswordHashingAlgorithmArgon2id = "argon2id"
 	PasswordHashingAlgorithmBcrypt   = "bcrypt"
 	AlphaNumericCharset              = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -33,10 +32,6 @@ var (
 	SQLiteBackupCronSchedule    string
 	SQLiteBackupFileName        string
 	PostgreSQLURL               string
-	MySQLURL                    string
-	MySQLMaxLifetimeMin         int
-	MySQLMaxOpenConns           int
-	MySQLMaxIdleConns           int
 	SessionCleanupEnabled       bool
 	SessionCleanupCronSchedule  string
 	LogLevel                    int
@@ -90,10 +85,6 @@ func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warnin
 	SQLiteBackupCronSchedule = MustGetString(prefix("SQLITE_BACKUP_CRON_SCHEDULE", addPrefix), "0 0 * * *")
 	SQLiteBackupFileName = MustGetString(prefix("SQLITE_BACKUP_FILE_NAME", addPrefix), "backup.db")
 	PostgreSQLURL = MustGetString(prefix("POSTGRESQL_URL", addPrefix), "")
-	MySQLURL = MustGetString(prefix("MYSQL_URL", addPrefix), "")
-	MySQLMaxLifetimeMin = MustGetInt(prefix("MYSQL_MAX_LIFETIME_MIN", addPrefix), 3)
-	MySQLMaxOpenConns = MustGetInt(prefix("MYSQL_MAX_OPEN_CONNS", addPrefix), 10)
-	MySQLMaxIdleConns = MustGetInt(prefix("MYSQL_MAX_IDLE_CONNS", addPrefix), 10)
 	SessionCleanupEnabled = MustGetBool(prefix("SESSION_CLEANUP_ENABLED", addPrefix), true)
 	SessionCleanupCronSchedule = MustGetString(prefix("SESSION_CLEANUP_CRON_SCHEDULE", addPrefix), "0 0 * * 0")
 	LogLevel = MustGetInt(prefix("LOG_LEVEL", addPrefix), 0)
@@ -125,8 +116,6 @@ func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warnin
 		DatabaseDriver = DatabaseDriverPostgreSQL
 	case DatabaseDriverSQLite:
 		DatabaseDriver = DatabaseDriverSQLite
-	case DatabaseDriverMySQL:
-		DatabaseDriver = DatabaseDriverMySQL
 	default:
 		DatabaseDriver = DatabaseDriverSQLite
 	}

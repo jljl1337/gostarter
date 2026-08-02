@@ -3,15 +3,15 @@ set -euo pipefail
 
 app_pids=()
 start_pwd=$(pwd)
+exit_code=0
 
 cleanup() {
     cd "$start_pwd"
 
     echo "Cleaning up application processes..."
-	local exit_code=$?
 
     echo "Shutting down the database compose..."
-	docker compose -f "test/full.compose.yml" down
+	docker compose -f "test/pg.compose.yml" down
 
 	set +e
 
@@ -42,7 +42,7 @@ echo "Building the binary..."
 go build -o full.out examples/full/cmd/main.go
 
 echo "Running the database compose..."
-docker compose -f test/full.compose.yml up -d
+docker compose -f test/pg.compose.yml up -d --wait
 
 echo "Running the application..."
 
@@ -56,14 +56,11 @@ pg_pid=$!
 app_pids+=($pg_pid)
 echo "Started the application with PostgreSQL PID: $pg_pid"
 
-./full.out -env=test/mysql.env > /dev/null 2>&1 &
-mysql_pid=$!
-app_pids+=($mysql_pid)
-echo "Started the application with MySQL PID: $mysql_pid"
-
 cd test
 echo "Running the tests..."
 set +e
 pnpm exec playwright test
+exit_code=$?
 set -e
+
 cd ..

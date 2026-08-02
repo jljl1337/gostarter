@@ -18,9 +18,6 @@ func NewDBFromEnv() (*sqlx.DB, error) {
 	case env.DatabaseDriverPostgreSQL:
 		return NewPostgreSQLDBFromEnv()
 
-	case env.DatabaseDriverMySQL:
-		return NewMySQLDBFromEnv()
-
 	case env.DatabaseDriverSQLite:
 		return NewSQLiteDBFromEnv()
 
