@@ -62,7 +62,7 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 
 	// Database backup job (only for SQLite)
 	if env.DatabaseDriver == env.DatabaseDriverSQLite {
-		if env.EnableSQLiteBackup {
+		if env.SQLiteBackupEnabled {
 			job := SQLiteBackupJob(schedulerService)
 			jobList = append(jobList, job)
 		} else {
@@ -73,7 +73,7 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 	}
 
 	// Session cleanup job
-	if env.EnableSessionCleanup {
+	if env.SessionCleanupEnabled {
 		job := SessionCleanupJob(schedulerService)
 		jobList = append(jobList, job)
 	} else {

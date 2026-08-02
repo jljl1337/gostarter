@@ -5,6 +5,7 @@ import "net/http"
 const (
 	DatabaseDriverSQLite             = "sqlite"
 	DatabaseDriverPostgreSQL         = "postgresql"
+	DatabaseDriverMySQL              = "mysql"
 	PasswordHashingAlgorithmArgon2id = "argon2id"
 	PasswordHashingAlgorithmBcrypt   = "bcrypt"
 	AlphaNumericCharset              = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -26,14 +27,17 @@ var (
 	LiveDataDir                 string
 	BackupDataDir               string
 	SQLiteDir                   string
-	LiveSQLiteFileName          string
-	EnableSQLiteBackup          bool
-	BackupSQLiteFileName        string
-	PostgresURL                 string
+	SQLiteLiveFileName          string
 	SQLiteDbBusyTimeout         string
-	SQLiteBackupDbPath          string
+	SQLiteBackupEnabled         bool
 	SQLiteBackupCronSchedule    string
-	EnableSessionCleanup        bool
+	SQLiteBackupFileName        string
+	PostgreSQLURL               string
+	MySQLURL                    string
+	MySQLMaxLifetimeMin         int
+	MySQLMaxOpenConns           int
+	MySQLMaxIdleConns           int
+	SessionCleanupEnabled       bool
 	SessionCleanupCronSchedule  string
 	LogLevel                    int
 	LogHealthCheck              bool
@@ -72,13 +76,17 @@ func MustSetConstants(addPrefix bool) { // TODO: list of warning
 	LiveDataDir = MustGetString(prefix("LIVE_DATA_DIR", addPrefix), "live")
 	BackupDataDir = MustGetString(prefix("BACKUP_DATA_DIR", addPrefix), "backup")
 	SQLiteDir = MustGetString(prefix("SQLITE_DIR", addPrefix), "db")
-	LiveSQLiteFileName = MustGetString(prefix("LIVE_SQLITE_FILE_NAME", addPrefix), "live.db")
-	EnableSQLiteBackup = MustGetBool(prefix("ENABLE_SQLITE_BACKUP", addPrefix), true)
-	BackupSQLiteFileName = MustGetString(prefix("BACKUP_SQLITE_FILE_NAME", addPrefix), "backup.db")
-	PostgresURL = MustGetString(prefix("POSTGRES_URL", addPrefix), "")
+	SQLiteLiveFileName = MustGetString(prefix("SQLITE_LIVE_FILE_NAME", addPrefix), "live.db")
 	SQLiteDbBusyTimeout = MustGetString(prefix("SQLITE_BUSY_TIMEOUT", addPrefix), "30000")
+	SQLiteBackupEnabled = MustGetBool(prefix("SQLITE_BACKUP_ENABLED", addPrefix), true)
 	SQLiteBackupCronSchedule = MustGetString(prefix("SQLITE_BACKUP_CRON_SCHEDULE", addPrefix), "0 0 * * *")
-	EnableSessionCleanup = MustGetBool(prefix("ENABLE_SESSION_CLEANUP", addPrefix), true)
+	SQLiteBackupFileName = MustGetString(prefix("SQLITE_BACKUP_FILE_NAME", addPrefix), "backup.db")
+	PostgreSQLURL = MustGetString(prefix("POSTGRESQL_URL", addPrefix), "")
+	MySQLURL = MustGetString(prefix("MYSQL_URL", addPrefix), "")
+	MySQLMaxLifetimeMin = MustGetInt(prefix("MYSQL_MAX_LIFETIME_MIN", addPrefix), 3)
+	MySQLMaxOpenConns = MustGetInt(prefix("MYSQL_MAX_OPEN_CONNS", addPrefix), 10)
+	MySQLMaxIdleConns = MustGetInt(prefix("MYSQL_MAX_IDLE_CONNS", addPrefix), 10)
+	SessionCleanupEnabled = MustGetBool(prefix("SESSION_CLEANUP_ENABLED", addPrefix), true)
 	SessionCleanupCronSchedule = MustGetString(prefix("SESSION_CLEANUP_CRON_SCHEDULE", addPrefix), "0 0 * * 0")
 	LogLevel = MustGetInt(prefix("LOG_LEVEL", addPrefix), 0)
 	LogHealthCheck = MustGetBool(prefix("LOG_HEALTH_CHECK", addPrefix), false)
@@ -109,6 +117,8 @@ func MustSetConstants(addPrefix bool) { // TODO: list of warning
 		DatabaseDriver = DatabaseDriverPostgreSQL
 	case DatabaseDriverSQLite:
 		DatabaseDriver = DatabaseDriverSQLite
+	case DatabaseDriverMySQL:
+		DatabaseDriver = DatabaseDriverMySQL
 	default:
 		DatabaseDriver = DatabaseDriverSQLite
 	}
