@@ -15,8 +15,8 @@ import (
 	"github.com/jljl1337/gostarter/examples/full/web"
 )
 
-func MustNewServer() *server.Server {
-	env.MustSetConstants()
+func MustNewServer(envFile string) *server.Server {
+	env.MustSetConstants(envFile)
 
 	err := log.SetCustomLoggerFromEnv()
 	if err != nil {

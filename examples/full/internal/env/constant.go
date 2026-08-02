@@ -6,8 +6,8 @@ var (
 	DeleteNotesCronSchedule string
 )
 
-func MustSetConstants() {
-	env.MustSetConstants(false)
+func MustSetConstants(files ...string) {
+	env.MustSetConstantsWithoutPrefix(files...)
 
 	DeleteNotesCronSchedule = env.MustGetString("DELETE_NOTES_CRON_SCHEDULE", "* * * * *")
 }

@@ -68,8 +68,16 @@ var (
 	SessionCookieSameSite http.SameSite
 )
 
-func MustSetConstants(addPrefix bool) { // TODO: list of warning
-	MustLoadOptionalEnvFile()
+func MustSetConstantsWithPrefix(files ...string) {
+	MustSetConstants(true, files...)
+}
+
+func MustSetConstantsWithoutPrefix(files ...string) {
+	MustSetConstants(false, files...)
+}
+
+func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warning
+	MustLoadOptionalEnvFile(files...)
 
 	databaseDriver := MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
 	DataDir = MustGetString(prefix("DATA_DIR", addPrefix), "data")
