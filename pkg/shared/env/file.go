@@ -7,26 +7,21 @@ import (
 	"github.com/joho/godotenv"
 )
 
-/*
-MustLoadOptionalEnvFile attempts to load environment variables from a .env file
-if it exists. If the file does not exist, it will not return an error,
-allowing the application to proceed with existing environment variables.
-If any other error occurs while loading the .env file, it will panic.
-*/
-func MustLoadOptionalEnvFile() {
-	if err := LoadOptionalEnvFile(); err != nil {
+// MustLoadOptionalEnvFile calls [LoadOptionalEnvFile] and panics if an
+// error occurs.
+func MustLoadOptionalEnvFile(files ...string) {
+	if err := LoadOptionalEnvFile(files...); err != nil {
 		panic(err)
 	}
 }
 
-/*
-LoadOptionalEnvFile attempts to load environment variables from a .env file
-if it exists. If the file does not exist, it will not return an error,
-allowing the application to proceed with existing environment variables.
-*/
-func LoadOptionalEnvFile() error {
+// LoadOptionalEnvFile attempts to load environment variables from a list of
+// .env files. If a file does not exist, it will be ignored, allowing the
+// application to proceed with existing environment variables. If any other
+// error occurs while loading the .env files, it will return that error.
+func LoadOptionalEnvFile(files ...string) error {
 	// It's okay if the .env file doesn't exist, we can proceed with existing env vars
-	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := godotenv.Load(files...); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 
