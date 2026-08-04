@@ -40,10 +40,6 @@ jobs:
         working-directory: test
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright browsers
-        working-directory: test
-        run: pnpm exec playwright install --with-deps chromium
-
       - name: Run test script
         run: bash script/test.sh
           
