@@ -24,7 +24,7 @@ test.describe('Full example API', () => {
     });
     expect(signUp.status()).toBe(201);
 
-    // 2) Pre-session (expect cookie + csrf token)
+    // Pre-session (expect cookie + csrf token)
     const pre = await baseRequest.post(api('/auth/pre-session'));
     expect(pre.status()).toBe(200);
     const preJson = await pre.json();
@@ -38,7 +38,7 @@ test.describe('Full example API', () => {
     preSessionCookie = setCookieHeader.split(';')[0];
     expect(preSessionCookie).toContain('session_token');
 
-    // 3) Sign in using pre-session cookie and CSRF header
+    // Sign in using pre-session cookie and CSRF header
     const signIn = await baseRequest.post(api('/auth/sign-in'), {
       headers: {
         'X-CSRF-Token': csrfToken || '',
@@ -65,13 +65,13 @@ test.describe('Full example API', () => {
     const sessionCsrf = signInJson.csrfToken;
     const authHeaders = { cookie: activeSessionCookie, 'X-CSRF-Token': sessionCsrf };
 
-    // 4) Get current account
+    // Get current account
     const me = await baseRequest.get(api('/accounts/me'), { headers: authHeaders });
     expect(me.status()).toBe(200);
     const meJson = await me.json();
     expect(meJson.username).toBe(username);
 
-    // 5) Update username
+    // Update username
     const newUsername = username + '_2';
     const updUser = await baseRequest.patch(api('/accounts/me/username'), {
       headers: { ...authHeaders, 'Content-Type': 'application/json' },
@@ -85,7 +85,20 @@ test.describe('Full example API', () => {
     const me2Json = await me2.json();
     expect(me2Json.username).toBe(newUsername);
 
-    // 6) Update password
+    // Update language code
+    const updLang = await baseRequest.patch(api('/accounts/me/language'), {
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      data: JSON.stringify({ languageCode: 'fr-FR' }),
+    });
+    expect(updLang.status()).toBe(200);
+
+    // verify updated
+    const me3 = await baseRequest.get(api('/accounts/me'), { headers: authHeaders });
+    expect(me3.status()).toBe(200);
+    const me3Json = await me3.json();
+    expect(me3Json.languageCode).toBe('fr-FR');
+
+    // Update password
     const updPass = await baseRequest.patch(api('/accounts/me/password'), {
       headers: { ...authHeaders, 'Content-Type': 'application/json' },
       data: JSON.stringify({ oldPassword: password, newPassword: 'N3wP@ssw0rd!' }),
@@ -93,7 +106,7 @@ test.describe('Full example API', () => {
     expect(updPass.status()).toBe(200);
     currentPassword = 'N3wP@ssw0rd!';
 
-    // 7) Notes endpoint lifecycle
+    // Notes endpoint lifecycle
     const createNote = await baseRequest.post(api('/notes'), { headers: authHeaders });
     expect(createNote.status()).toBe(201);
 
@@ -130,13 +143,13 @@ test.describe('Full example API', () => {
     const remainingNotes = await listNotesAfterDelete.json();
     expect(remainingNotes.find((note: { id: string }) => note.id === noteId)).toBeUndefined();
 
-    // 8) Get CSRF token endpoint (should succeed)
+    // Get CSRF token endpoint (should succeed)
     const csrf = await baseRequest.get(api('/auth/csrf-token'), { headers: authHeaders });
     expect(csrf.status()).toBe(200);
     const csrfJson = await csrf.json();
     expect(csrfJson.csrfToken).toBeTruthy();
 
-    // 9) Sign out
+    // Sign out
     const signOut = await baseRequest.post(api('/auth/sign-out'), { headers: authHeaders });
     expect(signOut.status()).toBe(200);
 
@@ -145,11 +158,11 @@ test.describe('Full example API', () => {
     const expiredSessionCookie = (Array.isArray(signOutCookie) ? signOutCookie[0] : signOutCookie).split(';')[0];
     expect(expiredSessionCookie).toContain('session_token=');
 
-    // 10) Ensure protected endpoint returns unauthorized after sign out
+    // Ensure protected endpoint returns unauthorized after sign out
     const meAfterSignOut = await baseRequest.get(api('/accounts/me'), { headers: { cookie: expiredSessionCookie } });
     expect(meAfterSignOut.status()).toBe(401);
 
-    // 11) Create a fresh session for delete-account coverage
+    // Create a fresh session for delete-account coverage
     const preAgain = await baseRequest.post(api('/auth/pre-session'));
     expect(preAgain.status()).toBe(200);
     const preAgainJson = await preAgain.json();
@@ -182,7 +195,7 @@ test.describe('Full example API', () => {
 
     const authHeadersAgain = { cookie: activeAgainSessionCookie, 'X-CSRF-Token': signInAgainJson.csrfToken };
 
-    // 12) Delete account
+    // Delete account
     const deleteAccount = await baseRequest.delete(api('/accounts/me'), { headers: authHeadersAgain });
     expect(deleteAccount.status()).toBe(200);
 
@@ -190,7 +203,7 @@ test.describe('Full example API', () => {
     expect(deleteCookie).toBeTruthy();
     expect(deleteCookie).toContain('session_token=');
 
-    // 13) Ensure protected endpoint returns unauthorized after account deletion
+    // Ensure protected endpoint returns unauthorized after account deletion
     const meAfter = await baseRequest.get(api('/accounts/me'), { headers: { cookie: deleteCookie } });
     expect(meAfter.status()).toBe(401);
   });
