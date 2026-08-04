@@ -20,7 +20,12 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
-	"github.com/jljl1337/gostarter/pkg/shared/validation"
+)
+
+const (
+	DefaultLanguageCode  = "en-US"
+	DefaultUsernameRegex = "^[a-zA-Z0-9_]{3,20}$"
+	DefaultPasswordRegex = "^[A-Za-z0-9!@#$%^&*]{8,64}$"
 )
 
 type Server struct {
@@ -28,18 +33,21 @@ type Server struct {
 	runMigrations           bool
 	runGostarterMigrations  bool
 	appMigrationFS          embed.FS
-	idGenerator             func() string
-	hashingManager          *crypto.HashingManager
-	validationManager       *validation.ValidationManager
-	responseHandler         *transport.ResponseHandler
-	cookieGenerator         *transport.CookieGenerator
+	scheduler               *cron.Scheduler
 	apiMux                  *http.ServeMux
 	mux                     *http.ServeMux
 	apiMiddleware           transport.Middleware
 	port                    string
 	gracefulShutdownTimeout time.Duration
 	httpServer              *http.Server
-	scheduler               *cron.Scheduler
+
+	idGenerator      func() string
+	languageCodeList []string
+	usernameRegex    string
+	passwordRegex    string
+	hashingManager   *crypto.HashingManager
+	responseHandler  *transport.ResponseHandler
+	cookieGenerator  *transport.CookieGenerator
 }
 
 func NewServer(db *sqlx.DB, options ...Option) (*Server, error) {
@@ -48,10 +56,6 @@ func NewServer(db *sqlx.DB, options ...Option) (*Server, error) {
 		return nil, fmt.Errorf("failed to create hashing manager: %w", err)
 	}
 
-	validationManager, err := validation.NewDefaultValidationManager()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create validation manager: %w", err)
-	}
 	server := &Server{
 		db:                      db,
 		runMigrations:           false,
@@ -60,11 +64,14 @@ func NewServer(db *sqlx.DB, options ...Option) (*Server, error) {
 		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
 		apiMux:                  http.NewServeMux(),
 		mux:                     http.NewServeMux(),
-		idGenerator:             generator.NewULID,
-		hashingManager:          hashingManager,
-		validationManager:       validationManager,
-		responseHandler:         transport.NewDefaultResponseHandler(),
-		cookieGenerator:         transport.NewCookieGeneratorFromEnv(),
+
+		idGenerator:      generator.NewULID,
+		languageCodeList: []string{DefaultLanguageCode},
+		usernameRegex:    DefaultUsernameRegex,
+		passwordRegex:    DefaultPasswordRegex,
+		hashingManager:   hashingManager,
+		responseHandler:  transport.NewDefaultResponseHandler(),
+		cookieGenerator:  transport.NewCookieGeneratorFromEnv(),
 	}
 
 	for _, option := range options {
