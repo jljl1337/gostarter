@@ -39,6 +39,7 @@ func MustNewServer(envFile string) *server.Server {
 		db,
 		server.WithGostarterMigration(),
 		server.WithAppMigrations(sql.MigrationDir),
+		server.WithCustomLanguageCodeList("en-US", "fr-FR"),
 		server.WithDefaultScheduler(job),
 		server.WithStaticSite("/", web.SiteDir, "site"),
 		server.WithDefaultMiddleware(),
