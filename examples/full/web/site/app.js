@@ -103,7 +103,7 @@ async function loadAccount() {
 }
 
 async function loadNotes() {
-    const notes = await apiFetch("/note");
+    const notes = await apiFetch("/notes");
     state.notes = Array.isArray(notes) ? notes : [];
     return state.notes;
 }
@@ -190,13 +190,13 @@ async function deleteAccount() {
 }
 
 async function createNote() {
-    await apiFetch("/note", { method: "POST" });
+    await apiFetch("/notes", { method: "POST" });
     await loadNotes();
     render();
 }
 
 async function saveNote(id, body) {
-    await apiFetch(`/note/${id}`, {
+    await apiFetch(`/notes/${id}`, {
         method: "PUT",
         body: JSON.stringify({ body }),
     });
@@ -205,7 +205,7 @@ async function saveNote(id, body) {
 }
 
 async function removeNote(id) {
-    await apiFetch(`/note/${id}`, { method: "DELETE" });
+    await apiFetch(`/notes/${id}`, { method: "DELETE" });
     await loadNotes();
     render();
 }

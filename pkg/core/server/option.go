@@ -39,16 +39,30 @@ func WithCustomIDGenerator(idGenerator func() string) Option {
 	}
 }
 
-func WithCustomHashingManager(hashingManager *crypto.HashingManager) Option {
+func WithCustomLanguageCodeList(languageCodeList ...string) Option {
 	return func(s *Server) error {
-		s.hashingManager = hashingManager
+		s.languageCodeList = languageCodeList
 		return nil
 	}
 }
 
-func WithCustomValidationManager(validationManager *validation.ValidationManager) Option {
+func WithCustomUsernameRegex(usernameRegex string) Option {
 	return func(s *Server) error {
-		s.validationManager = validationManager
+		s.usernameRegex = usernameRegex
+		return nil
+	}
+}
+
+func WithCustomPasswordRegex(passwordRegex string) Option {
+	return func(s *Server) error {
+		s.passwordRegex = passwordRegex
+		return nil
+	}
+}
+
+func WithCustomHashingManager(hashingManager *crypto.HashingManager) Option {
+	return func(s *Server) error {
+		s.hashingManager = hashingManager
 		return nil
 	}
 }
@@ -136,7 +150,12 @@ func WithMiddleware(middlewareList ...transport.Middleware) Option {
 
 func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
-		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, s.validationManager)
+		validationManager, err := validation.NewValidationManager(s.languageCodeList, s.usernameRegex, s.passwordRegex)
+		if err != nil {
+			return fmt.Errorf("failed to create validation manager: %w", err)
+		}
+
+		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, validationManager)
 		endpointHandler := transport.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
 		handlerList = append([]transport.Handler{endpointHandler}, handlerList...)
 		return WithApiHandler("/api", handlerList...)(s)

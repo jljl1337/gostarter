@@ -1,8 +1,8 @@
 @baseUrl = http://localhost:3000
 @username = 12341234
 @password = 123412341234
-@sessionToken = Nqrc1qERDqJkW82EcJdVMOK5H28ogocC
-@csrfToken = irshBJIzCVbU5ZFLKPbxDfpc5Vy4jlSu
+@sessionToken = vTUGEBNFNx5s3kdjXmriq8bAEJWeTh2i
+@csrfToken = hene1Wfu0IuNNsj5WdW7GiFUjzNGZGht
 
 ############################## Health
 
@@ -70,6 +70,17 @@ Content-Type: application/json
 
 {
   "newUsername": "12341234"
+}
+
+###
+
+PATCH {{baseUrl}}/api/accounts/me/language
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "languageCode": "fr-FR"
 }
 
 ###

@@ -72,6 +72,21 @@ export function textareaField({ label, name, value = "", required = true, placeh
     return el("label", { className: "field" }, el("span", { text: label }), input);
 }
 
+export function selectField({ label, name, value = "", required = true, options = [] }) {
+    const input = el("select", {
+        name,
+        required,
+    });
+
+    for (const option of options) {
+        input.append(el("option", { value: option.value, text: option.label }));
+    }
+
+    input.value = value;
+
+    return el("label", { className: "field" }, el("span", { text: label }), input);
+}
+
 export function flashMessage(flash) {
     if (!flash) {
         return null;
@@ -103,7 +118,16 @@ export function authPage({ mode, onSignIn, onSignUp, onNavigateAuth, flash, meta
     );
 
     if (isSignUp) {
-        form.append(field({ label: "Language code", name: "languageCode", value: "en-US", required: true }));
+        form.append(selectField({
+            label: "Language code",
+            name: "languageCode",
+            value: "en-US",
+            required: true,
+            options: [
+                { value: "en-US", label: "en-US" },
+                { value: "fr-FR", label: "fr-FR" },
+            ],
+        }));
     }
 
     form.append(
@@ -248,7 +272,16 @@ export function accountPage({ account, onUpdateUsername, onUpdatePassword, onUpd
     const languageForm = el("form", { className: "card form-card" });
     languageForm.append(
         el("h2", { text: "Update language" }),
-        field({ label: "Language code", name: "languageCode", value: account?.languageCode || "en-US", required: true }),
+        selectField({
+            label: "Language code",
+            name: "languageCode",
+            value: account?.languageCode || "en-US",
+            required: true,
+            options: [
+                { value: "en-US", label: "en-US" },
+                { value: "fr-FR", label: "fr-FR" },
+            ],
+        }),
         el("button", { type: "submit", className: "primary", text: "Save language" })
     );
     languageForm.addEventListener("submit", async (event) => {
