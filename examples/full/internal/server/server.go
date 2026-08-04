@@ -36,7 +36,7 @@ func MustNewServer(envFile string) *server.Server {
 	handler := transport.NewEndpointHandler(service, responseHandler)
 
 	s, err := server.NewServer(
-		db,
+		server.WithDB(db),
 		server.WithGostarterMigration(),
 		server.WithAppMigrations(sql.MigrationDir),
 		server.WithCustomLanguageCodeList("en-US", "fr-FR"),

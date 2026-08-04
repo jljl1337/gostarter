@@ -12,9 +12,20 @@ import (
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/validation"
+	"github.com/jmoiron/sqlx"
 )
 
 type Option func(*Server) error
+
+func WithDB(db *sqlx.DB) Option {
+	return func(s *Server) error {
+		if db == nil {
+			return fmt.Errorf("database connection cannot be nil")
+		}
+		s.db = db
+		return nil
+	}
+}
 
 func WithGostarterMigration() Option {
 	return func(s *Server) error {

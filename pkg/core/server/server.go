@@ -50,14 +50,13 @@ type Server struct {
 	cookieGenerator  *transport.CookieGenerator
 }
 
-func NewServer(db *sqlx.DB, options ...Option) (*Server, error) {
+func NewServer(options ...Option) (*Server, error) {
 	hashingManager, err := crypto.NewHashingManagerFromEnv()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hashing manager: %w", err)
 	}
 
 	server := &Server{
-		db:                      db,
 		runMigrations:           false,
 		runGostarterMigrations:  false,
 		port:                    env.Port,
@@ -114,11 +113,13 @@ func (s *Server) StartWithGracefulShutdown() {
 func (s *Server) Start() error {
 	log.Info("Starting server")
 
-	log.Info("Testing database connection")
-	if err := s.db.Ping(); err != nil {
-		return fmt.Errorf("failed to ping database: %w", err)
+	if s.db != nil {
+		log.Info("Testing database connection")
+		if err := s.db.Ping(); err != nil {
+			return fmt.Errorf("failed to ping database: %w", err)
+		}
+		log.Info("Database connection successful")
 	}
-	log.Info("Database connection successful")
 
 	if s.runMigrations {
 		log.Info("Running migrations")
@@ -160,9 +161,11 @@ func (s *Server) Stop(ctx context.Context) error {
 		}
 	}
 
-	log.Info("Closing database connection")
-	if err := s.db.Close(); err != nil {
-		return fmt.Errorf("failed to close database connection: %w", err)
+	if s.db != nil {
+		log.Info("Closing database connection")
+		if err := s.db.Close(); err != nil {
+			return fmt.Errorf("failed to close database connection: %w", err)
+		}
 	}
 
 	log.Info("Server stopped successfully")
