@@ -111,6 +111,10 @@ func (s *Server) StartWithGracefulShutdown() {
 }
 
 func (s *Server) Start() error {
+	if s.httpServer == nil {
+		return fmt.Errorf("http server must be initialized before starting the server")
+	}
+
 	log.Info("Starting server")
 
 	if s.db != nil {
@@ -133,12 +137,10 @@ func (s *Server) Start() error {
 		s.scheduler.Start()
 	}
 
-	if s.httpServer != nil {
-		log.Infof("Starting http server on %s", s.httpServer.Addr)
-		err := s.httpServer.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("failed to start http server: %w", err)
-		}
+	log.Infof("Starting http server on %s", s.httpServer.Addr)
+	err := s.httpServer.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("failed to start http server: %w", err)
 	}
 
 	return nil
@@ -147,11 +149,9 @@ func (s *Server) Start() error {
 func (s *Server) Stop(ctx context.Context) error {
 	log.Info("Stopping server")
 
-	if s.httpServer != nil {
-		log.Info("Stopping HTTP server")
-		if err := s.httpServer.Shutdown(ctx); err != nil {
-			return fmt.Errorf("failed to stop HTTP server: %w", err)
-		}
+	log.Info("Stopping HTTP server")
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to stop HTTP server: %w", err)
 	}
 
 	if s.scheduler != nil {
