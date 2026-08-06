@@ -31,6 +31,10 @@ const getNotesByAccountID = `
 		note
 	WHERE
 		account_id = :account_id
+	ORDER BY
+		updated_at DESC,
+		created_at DESC,
+		id DESC
 `
 
 type GetNotesByAccountIDParams struct {
@@ -62,7 +66,7 @@ func (q *Queries) GetNoteByID(ctx context.Context, id string) ([]Note, error) {
 	return items, err
 }
 
-const updateNoteByID = `
+const updateNoteBodyByID = `
 	UPDATE
 		note
 	SET
@@ -72,14 +76,34 @@ const updateNoteByID = `
 		id = :id
 `
 
-type UpdateNoteByIDParams struct {
+type UpdateNoteBodyByIDParams struct {
 	ID        string `db:"id"`
 	Body      string `db:"body"`
 	UpdatedAt string `db:"updated_at"`
 }
 
-func (q *Queries) UpdateNoteByID(ctx context.Context, arg UpdateNoteByIDParams) error {
-	return q.NamedExecOneRowContext(ctx, updateNoteByID, arg)
+func (q *Queries) UpdateNoteBodyByID(ctx context.Context, arg UpdateNoteBodyByIDParams) error {
+	return q.NamedExecOneRowContext(ctx, updateNoteBodyByID, arg)
+}
+
+const updateNodePositivityByID = `
+	UPDATE
+		note
+	SET
+		positivity = :positivity,
+		updated_at = :updated_at
+	WHERE
+		id = :id
+`
+
+type UpdateNotePositivityByIDParams struct {
+	ID         string `db:"id"`
+	Positivity int    `db:"positivity"`
+	UpdatedAt  string `db:"updated_at"`
+}
+
+func (q *Queries) UpdateNotePositivityByID(ctx context.Context, arg UpdateNotePositivityByIDParams) error {
+	return q.NamedExecOneRowContext(ctx, updateNodePositivityByID, arg)
 }
 
 const deleteNoteByID = `

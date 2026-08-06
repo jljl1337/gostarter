@@ -2,6 +2,10 @@ package env
 
 import "github.com/jljl1337/gostarter/pkg/shared/env"
 
+const (
+	QueueLaneNotePositivity = "note_positivity"
+)
+
 var (
 	DeleteNotesCronSchedule string
 )

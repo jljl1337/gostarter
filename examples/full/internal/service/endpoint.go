@@ -1,15 +1,20 @@
 package service
 
-import "github.com/jmoiron/sqlx"
+import (
+	"github.com/jljl1337/gostarter/pkg/core/queue"
+	"github.com/jmoiron/sqlx"
+)
 
 type EndpointService struct {
-	db          *sqlx.DB
-	idGenerator func() string
+	db           *sqlx.DB
+	idGenerator  func() string
+	queueManager *queue.QueueManager
 }
 
-func NewEndpointService(db *sqlx.DB, idGenerator func() string) *EndpointService {
+func NewEndpointService(db *sqlx.DB, idGenerator func() string, queueManager *queue.QueueManager) *EndpointService {
 	return &EndpointService{
-		db:          db,
-		idGenerator: idGenerator,
+		db:           db,
+		idGenerator:  idGenerator,
+		queueManager: queueManager,
 	}
 }

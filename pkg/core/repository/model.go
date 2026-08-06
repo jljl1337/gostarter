@@ -26,3 +26,12 @@ type Session struct {
 	CreatedAt string  `json:"createdAt" db:"created_at"`
 	UpdatedAt string  `json:"updatedAt" db:"updated_at"`
 }
+
+type QueueTask struct {
+	ID        string `json:"id" db:"id"`
+	Lane      string `json:"lane" db:"lane"`
+	Payload   string `json:"payload" db:"payload"`
+	Status    string `json:"status" db:"status"`
+	CreatedAt string `json:"createdAt" db:"created_at"`
+	UpdatedAt string `json:"updatedAt" db:"updated_at"`
+}

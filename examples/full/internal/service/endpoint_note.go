@@ -6,6 +6,7 @@ import (
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 
+	"github.com/jljl1337/gostarter/examples/full/internal/env"
 	"github.com/jljl1337/gostarter/examples/full/internal/repository"
 )
 
@@ -21,11 +22,12 @@ func (s *EndpointService) CreateNote(ctx context.Context, accountID string) erro
 	queries := repository.NewQueries(tx)
 
 	note := repository.Note{
-		ID:        s.idGenerator(),
-		AccountID: accountID,
-		Body:      "This is a new note.",
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:         s.idGenerator(),
+		AccountID:  accountID,
+		Body:       "This is a new note.",
+		Positivity: 0,
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 
 	err = queries.CreateNote(ctx, note)
@@ -35,6 +37,10 @@ func (s *EndpointService) CreateNote(ctx context.Context, accountID string) erro
 
 	if err := tx.Commit(); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+	}
+
+	if err := s.queueManager.Enqueue(env.QueueLaneNotePositivity, note.ID); err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %v", err)
 	}
 
 	return nil
@@ -51,7 +57,7 @@ func (s *EndpointService) GetNotesByAccountID(ctx context.Context, accountID str
 	return notes, nil
 }
 
-func (s *EndpointService) UpdateNoteByID(ctx context.Context, accountID string, noteID string, newBody string) error {
+func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID string, noteID string, newBody string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
@@ -80,19 +86,23 @@ func (s *EndpointService) UpdateNoteByID(ctx context.Context, accountID string, 
 		return service.NewServiceErrorf(service.ErrCodeNotFound, "note with ID %s not found", noteID)
 	}
 
-	updateParams := repository.UpdateNoteByIDParams{
+	updateParams := repository.UpdateNoteBodyByIDParams{
 		ID:        noteID,
 		Body:      newBody,
 		UpdatedAt: now,
 	}
 
-	err = queries.UpdateNoteByID(ctx, updateParams)
+	err = queries.UpdateNoteBodyByID(ctx, updateParams)
 	if err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note by ID: %v", err)
 	}
 
 	if err := tx.Commit(); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+	}
+
+	if err := s.queueManager.Enqueue(env.QueueLaneNotePositivity, note.ID); err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %v", err)
 	}
 
 	return nil

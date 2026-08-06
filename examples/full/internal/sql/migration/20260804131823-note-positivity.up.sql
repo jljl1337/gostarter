@@ -1,0 +1,4 @@
+ALTER TABLE
+    note
+ADD COLUMN
+    positivity INTEGER NOT NULL DEFAULT 0;

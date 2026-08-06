@@ -214,7 +214,8 @@ function noteCard({ note, onSave, onDelete }) {
             ),
             el("div", { className: "note-meta" },
                 el("span", { text: `Created ${note.createdAt || "unknown"}` }),
-                el("span", { text: `Updated ${note.updatedAt || "unknown"}` })
+                el("span", { text: `Updated ${note.updatedAt || "unknown"}` }),
+                el("span", { text: `Positivity ${note.positivity ?? 0}` })
             )
         ),
         el("label", { className: "field" }, el("span", { text: "Body" }), body),

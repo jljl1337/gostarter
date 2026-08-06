@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
+	"github.com/jljl1337/gostarter/pkg/core/queue"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
@@ -22,6 +23,7 @@ func WithDB(db *sqlx.DB) Option {
 		if db == nil {
 			return fmt.Errorf("database connection cannot be nil")
 		}
+
 		s.db = db
 		return nil
 	}
@@ -98,6 +100,17 @@ func WithDefaultScheduler(jobList ...cron.Job) Option {
 		defaultJobList := cron.DefaultSchedulerJobFromEnv(schedulerService)
 
 		return WithScheduler(append(defaultJobList, jobList...)...)(s)
+	}
+}
+
+func WithQueueManager(queueManager *queue.QueueManager) Option {
+	return func(s *Server) error {
+		if queueManager == nil {
+			return fmt.Errorf("queue manager cannot be nil")
+		}
+
+		s.queueManager = queueManager
+		return nil
 	}
 }
 

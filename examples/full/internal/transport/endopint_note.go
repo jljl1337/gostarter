@@ -69,7 +69,7 @@ func (h *EndpointHandler) updateNoteByID(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Update the note
-	if err := h.service.UpdateNoteByID(r.Context(), account.ID, noteID, req.Body); err != nil {
+	if err := h.service.UpdateNoteBodyByID(r.Context(), account.ID, noteID, req.Body); err != nil {
 		h.responseHandler.WriteErrorResponse(w, err)
 		return
 	}

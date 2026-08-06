@@ -121,7 +121,7 @@ test.describe('Full example API', () => {
     expect(createdNote.body).toBe('This is a new note.');
 
     const noteId = createdNote.id;
-    const updatedBody = 'Updated note body';
+    const updatedBody = 'good good bad note';
     const updateNote = await baseRequest.put(api(`/notes/${noteId}`), {
       headers: { ...authHeaders, 'Content-Type': 'application/json' },
       data: JSON.stringify({ body: updatedBody }),
@@ -134,7 +134,21 @@ test.describe('Full example API', () => {
     const updatedNote = updatedNotes.find((note: { id: string }) => note.id === noteId);
     expect(updatedNote).toBeTruthy();
     expect(updatedNote.body).toBe(updatedBody);
+    expect(updatedNote.positivity).toBe(0);
 
+    // Test positivity queue
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait 1 second for sentiment analysis to complete
+
+    const secondListNotes = await baseRequest.get(api('/notes'), { headers: authHeaders });
+    expect(secondListNotes.status()).toBe(200);
+    const secondNotes = await secondListNotes.json();
+    expect(Array.isArray(secondNotes)).toBeTruthy();
+    const secondNote = secondNotes.find((note: { id: string }) => note.id === noteId);
+    expect(secondNote).toBeTruthy();
+    expect(secondNote.body).toBe(updatedBody);
+    expect(secondNote.positivity).toBe(1);
+
+    // Continue with note deletion
     const deleteNote = await baseRequest.delete(api(`/notes/${noteId}`), { headers: authHeaders });
     expect(deleteNote.status()).toBe(200);
 
