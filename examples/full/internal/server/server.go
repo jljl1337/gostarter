@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/jljl1337/gostarter/pkg/core/queue"
 	"github.com/jljl1337/gostarter/pkg/core/server"
 	gsTransport "github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/db"
@@ -31,8 +32,11 @@ func MustNewServer(envFile string) *server.Server {
 	schedulerService := service.NewSchedulerService(db)
 	job := cron.DeleteNotesJob(schedulerService)
 
+	queueService := service.NewQueueService(db)
+	queueManager := queue.NewDefaultQueueManager(db, queueService.GetQueueLanes()...)
+
 	responseHandler := gsTransport.NewDefaultResponseHandler()
-	service := service.NewEndpointService(db, generator.NewULID)
+	service := service.NewEndpointService(db, generator.NewULID, queueManager)
 	handler := transport.NewEndpointHandler(service, responseHandler)
 
 	s, err := server.NewServer(
@@ -41,6 +45,7 @@ func MustNewServer(envFile string) *server.Server {
 		server.WithAppMigrations(sql.MigrationDir),
 		server.WithCustomLanguageCodeList("en-US", "fr-FR"),
 		server.WithDefaultScheduler(job),
+		server.WithQueueManager(queueManager),
 		server.WithStaticSite("/", web.SiteDir, "site"),
 		server.WithDefaultMiddleware(),
 		server.WithDefaultApiHandler(handler),
