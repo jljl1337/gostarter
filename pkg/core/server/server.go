@@ -15,6 +15,7 @@ import (
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
 	"github.com/jljl1337/gostarter/pkg/core/migration"
+	"github.com/jljl1337/gostarter/pkg/core/queue"
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
@@ -34,12 +35,13 @@ type Server struct {
 	runGostarterMigrations  bool
 	appMigrationFS          embed.FS
 	scheduler               *cron.Scheduler
+	queueManager            *queue.QueueManager
 	apiMux                  *http.ServeMux
 	mux                     *http.ServeMux
 	apiMiddleware           transport.Middleware
 	port                    string
-	gracefulShutdownTimeout time.Duration
 	httpServer              *http.Server
+	gracefulShutdownTimeout time.Duration
 
 	idGenerator      func() string
 	languageCodeList []string
@@ -60,9 +62,9 @@ func NewServer(options ...Option) (*Server, error) {
 		runMigrations:           false,
 		runGostarterMigrations:  false,
 		port:                    env.Port,
-		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
 		apiMux:                  http.NewServeMux(),
 		mux:                     http.NewServeMux(),
+		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
 
 		idGenerator:      generator.NewULID,
 		languageCodeList: []string{DefaultLanguageCode},
@@ -137,6 +139,13 @@ func (s *Server) Start() error {
 		s.scheduler.Start()
 	}
 
+	if s.queueManager != nil {
+		log.Info("Starting queue manager")
+		if err := s.queueManager.Resume(); err != nil {
+			return fmt.Errorf("failed to resume queue manager: %w", err)
+		}
+	}
+
 	log.Infof("Starting http server on %s", s.httpServer.Addr)
 	err := s.httpServer.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -152,6 +161,13 @@ func (s *Server) Stop(ctx context.Context) error {
 	log.Info("Stopping HTTP server")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to stop HTTP server: %w", err)
+	}
+
+	if s.queueManager != nil {
+		log.Info("Stopping queue manager")
+		if err := s.queueManager.Shutdown(ctx); err != nil {
+			return fmt.Errorf("failed to stop queue manager: %w", err)
+		}
 	}
 
 	if s.scheduler != nil {

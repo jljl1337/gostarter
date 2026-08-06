@@ -8,6 +8,11 @@ const (
 	PasswordHashingAlgorithmArgon2id = "argon2id"
 	PasswordHashingAlgorithmBcrypt   = "bcrypt"
 	AlphaNumericCharset              = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	QueueTaskStatusPending   = "pending"
+	QueueTaskStatusRunning   = "running"
+	QueueTaskStatusSucceeded = "succeeded"
+	QueueTaskStatusFailed    = "failed"
 )
 
 var (
