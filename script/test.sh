@@ -46,6 +46,9 @@ if [ -d "data/test" ]; then
     rm -r "data/test"
 fi
 
+mkdir -p "data/test/sqlite"
+mkdir -p "data/test/pg"
+
 echo "Building the binary..."
 go build -o full.out examples/full/cmd/main.go
 
