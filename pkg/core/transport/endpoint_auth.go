@@ -36,17 +36,17 @@ func (h *EndpointHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	// Input validation
 	var req signUpRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Invalid request payload", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if req.Username == "" || req.Password == "" {
-		h.responseHandler.WriteMessageResponse(w, "Username and password are required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Username and password are required", http.StatusBadRequest)
 		return
 	}
 
 	if req.LanguageCode == "" {
-		h.responseHandler.WriteMessageResponse(w, "Language code is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Language code is required", http.StatusBadRequest)
 		return
 	}
 
@@ -55,26 +55,26 @@ func (h *EndpointHandler) signUp(w http.ResponseWriter, r *http.Request) {
 		Password:     req.Password,
 		LanguageCode: req.LanguageCode,
 	}); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
-	h.responseHandler.WriteMessageResponse(w, "Account signed up successfully", http.StatusCreated)
+	h.responseHandler.WriteMessage(w, "Account signed up successfully", http.StatusCreated)
 }
 
 func (h *EndpointHandler) preSession(w http.ResponseWriter, r *http.Request) {
 	// Process the request
 	sessionToken, CSRFToken, err := h.service.GetPreSession(r.Context())
 	if err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
 	http.SetCookie(w, h.cookieGenerator.NewActiveSessionCookie(sessionToken))
 
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, signInPreSessionCSRFTokenResponse{
+	h.responseHandler.WriteJSON(w, http.StatusOK, signInPreSessionCSRFTokenResponse{
 		CSRFToken: CSRFToken,
 	})
 }
@@ -83,24 +83,24 @@ func (h *EndpointHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	// Input validation
 	preSessionToken, err := r.Cookie(env.SessionCookieName)
 	if err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Unauthorized", http.StatusUnauthorized)
+		h.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	preSessionCSRFToken := r.Header.Get("X-CSRF-Token")
 	if preSessionCSRFToken == "" {
-		h.responseHandler.WriteMessageResponse(w, "CSRF token is required", http.StatusUnauthorized)
+		h.responseHandler.WriteMessage(w, "CSRF token is required", http.StatusUnauthorized)
 		return
 	}
 
 	var req signInRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Invalid request payload", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if req.Password == "" {
-		h.responseHandler.WriteMessageResponse(w, "Password is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Password is required", http.StatusBadRequest)
 		return
 	}
 
@@ -112,14 +112,14 @@ func (h *EndpointHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		Password:            req.Password,
 	})
 	if err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
 	http.SetCookie(w, h.cookieGenerator.NewActiveSessionCookie(sessionToken))
 
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, signInPreSessionCSRFTokenResponse{
+	h.responseHandler.WriteJSON(w, http.StatusOK, signInPreSessionCSRFTokenResponse{
 		CSRFToken: CSRFToken,
 	})
 }
@@ -128,20 +128,20 @@ func (h *EndpointHandler) signOut(w http.ResponseWriter, r *http.Request) {
 	// Input validation
 	sessionToken, err := r.Cookie(env.SessionCookieName)
 	if err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Unauthorized", http.StatusUnauthorized)
+		h.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Process the request
 	if err := h.service.SignOut(r.Context(), sessionToken.Value); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
 	http.SetCookie(w, h.cookieGenerator.NewExpiredSessionCookie())
 
-	h.responseHandler.WriteMessageResponse(w, "Account logged out successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Account logged out successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) signOutAll(w http.ResponseWriter, r *http.Request) {
@@ -149,38 +149,38 @@ func (h *EndpointHandler) signOutAll(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	account := GetAccountFromContext(ctx)
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
 	if err := h.service.SignOutAllSession(r.Context(), *account); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
 	http.SetCookie(w, h.cookieGenerator.NewExpiredSessionCookie())
 
-	h.responseHandler.WriteMessageResponse(w, "Account logged out from all sessions successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Account logged out from all sessions successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) csrfToken(w http.ResponseWriter, r *http.Request) {
 	// Input validation
 	sessionToken, err := r.Cookie(env.SessionCookieName)
 	if err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Unauthorized", http.StatusUnauthorized)
+		h.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Process the request
 	CSRFToken, err := h.service.CSRFToken(r.Context(), sessionToken.Value)
 	if err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, signInPreSessionCSRFTokenResponse{
+	h.responseHandler.WriteJSON(w, http.StatusOK, signInPreSessionCSRFTokenResponse{
 		CSRFToken: CSRFToken,
 	})
 }

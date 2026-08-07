@@ -27,7 +27,7 @@ func (h *EndpointHandler) getCurrentAccount(w http.ResponseWriter, r *http.Reque
 	// Process the request
 	account := GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
@@ -39,7 +39,7 @@ func (h *EndpointHandler) getCurrentAccount(w http.ResponseWriter, r *http.Reque
 		LanguageCode: account.LanguageCode,
 		CreatedAt:    account.CreatedAt,
 	}
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, response)
+	h.responseHandler.WriteJSON(w, http.StatusOK, response)
 }
 
 func (h *EndpointHandler) updateUsername(w http.ResponseWriter, r *http.Request) {
@@ -48,18 +48,18 @@ func (h *EndpointHandler) updateUsername(w http.ResponseWriter, r *http.Request)
 		NewUsername string `json:"newUsername"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Invalid request body", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 	if req.NewUsername == "" {
-		h.responseHandler.WriteMessageResponse(w, "New username is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "New username is required", http.StatusBadRequest)
 		return
 	}
 
 	// Process the request
 	account := GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
@@ -67,12 +67,12 @@ func (h *EndpointHandler) updateUsername(w http.ResponseWriter, r *http.Request)
 		Account:     *account,
 		NewUsername: req.NewUsername,
 	}); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
-	h.responseHandler.WriteMessageResponse(w, "Username updated successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Username updated successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request) {
@@ -82,18 +82,18 @@ func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request)
 		NewPassword string `json:"newPassword"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Invalid request body", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 	if req.NewPassword == "" {
-		h.responseHandler.WriteMessageResponse(w, "New password is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "New password is required", http.StatusBadRequest)
 		return
 	}
 
 	// Process the request
 	account := GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
@@ -102,12 +102,12 @@ func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request)
 		OldPassword: req.OldPassword,
 		NewPassword: req.NewPassword,
 	}); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
-	h.responseHandler.WriteMessageResponse(w, "Password updated successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Password updated successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request) {
@@ -116,18 +116,18 @@ func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request)
 		LanguageCode string `json:"languageCode"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Invalid request body", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 	if req.LanguageCode == "" {
-		h.responseHandler.WriteMessageResponse(w, "Language code is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Language code is required", http.StatusBadRequest)
 		return
 	}
 
 	// Process the request
 	account := GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
@@ -135,29 +135,29 @@ func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request)
 		Account:      *account,
 		LanguageCode: req.LanguageCode,
 	}); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
-	h.responseHandler.WriteMessageResponse(w, "Language updated successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Language updated successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) deleteCurrentAccount(w http.ResponseWriter, r *http.Request) {
 	// Process the request
 	account := GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
 	if err := h.service.DeleteAccountByID(r.Context(), *account); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
 	// Respond to the client
 	http.SetCookie(w, h.cookieGenerator.NewExpiredSessionCookie())
 
-	h.responseHandler.WriteMessageResponse(w, "Account deleted successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Account deleted successfully", http.StatusOK)
 }

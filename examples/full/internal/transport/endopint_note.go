@@ -17,45 +17,45 @@ func (h *EndpointHandler) registerNoteRoutes(mux *http.ServeMux) {
 func (h *EndpointHandler) createNote(w http.ResponseWriter, r *http.Request) {
 	account := transport.GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
 	if err := h.service.CreateNote(r.Context(), account.ID); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
-	h.responseHandler.WriteMessageResponse(w, "Note created successfully", http.StatusCreated)
+	h.responseHandler.WriteMessage(w, "Note created successfully", http.StatusCreated)
 }
 
 func (h *EndpointHandler) getNotesOfAccount(w http.ResponseWriter, r *http.Request) {
 	account := transport.GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
 	notes, err := h.service.GetNotesByAccountID(r.Context(), account.ID)
 	if err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, notes)
+	h.responseHandler.WriteJSON(w, http.StatusOK, notes)
 }
 
 func (h *EndpointHandler) updateNoteByID(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL path
 	noteID := r.PathValue("id")
 	if noteID == "" {
-		h.responseHandler.WriteMessageResponse(w, "Note ID is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Note ID is required", http.StatusBadRequest)
 		return
 	}
 
 	account := transport.GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
@@ -64,38 +64,38 @@ func (h *EndpointHandler) updateNoteByID(w http.ResponseWriter, r *http.Request)
 		Body string `json:"body"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessageResponse(w, "Invalid request body", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	// Update the note
 	if err := h.service.UpdateNoteBodyByID(r.Context(), account.ID, noteID, req.Body); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
-	h.responseHandler.WriteMessageResponse(w, "Note updated successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Note updated successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) deleteNoteByID(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL path
 	noteID := r.PathValue("id")
 	if noteID == "" {
-		h.responseHandler.WriteMessageResponse(w, "Note ID is required", http.StatusBadRequest)
+		h.responseHandler.WriteMessage(w, "Note ID is required", http.StatusBadRequest)
 		return
 	}
 
 	account := transport.GetAccountFromContext(r.Context())
 	if account == nil {
-		h.responseHandler.WriteErrorResponsef(w, "failed to get account from context")
+		h.responseHandler.WriteErrorf(w, "failed to get account from context")
 		return
 	}
 
 	// Delete the note
 	if err := h.service.DeleteNoteByID(r.Context(), account.ID, noteID); err != nil {
-		h.responseHandler.WriteErrorResponse(w, err)
+		h.responseHandler.WriteServiceError(w, err)
 		return
 	}
 
-	h.responseHandler.WriteMessageResponse(w, "Note deleted successfully", http.StatusOK)
+	h.responseHandler.WriteMessage(w, "Note deleted successfully", http.StatusOK)
 }
