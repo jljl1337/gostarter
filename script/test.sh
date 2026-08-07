@@ -10,9 +10,6 @@ cleanup() {
 
     echo "Cleaning up application processes..."
 
-    echo "Shutting down the database compose..."
-	docker compose -f "test/pg.compose.yml" down
-
 	set +e
 
     if [ ${#app_pids[@]} -eq 0 ]; then
@@ -32,11 +29,22 @@ cleanup() {
 		wait "$pid" 2>/dev/null || true
 	done
 
+    echo "Shutting down the database compose..."
+	docker compose -f "test/pg.compose.yml" down
+
+    if [ -d "data/test" ]; then
+        rm -r "data/test"
+    fi
+
     echo "Cleanup complete. Exiting with code $exit_code."
 	exit "$exit_code"
 }
 
 trap cleanup EXIT INT TERM
+
+if [ -d "data/test" ]; then
+    rm -r "data/test"
+fi
 
 echo "Building the binary..."
 go build -o full.out examples/full/cmd/main.go
