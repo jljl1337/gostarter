@@ -94,33 +94,33 @@ func NewResponseHandler(
 }
 
 /*
-WriteMessageResponse writes a JSON response with a message and status code to
+WriteMessage writes a JSON response with a message and status code to
 the HTTP response writer. It also includes a JSON error code in the response.
 */
-func (rh *ResponseHandler) WriteMessageResponse(w http.ResponseWriter, message string, statusCode int) {
+func (rh *ResponseHandler) WriteMessage(w http.ResponseWriter, message string, statusCode int) {
 	jsonCode := strconv.Itoa(statusCode)
-	rh.WriteJSONCodeMessageResponse(w, message, statusCode, jsonCode)
+	rh.WriteJSONCodeMessage(w, message, statusCode, jsonCode)
 }
 
-// WriteErrorResponsef writes an error response to the HTTP response writer
-// with a formatted message. It creates a new internal error with the provided
-// format and arguments, and then calls WriteErrorResponse to handle the
-// response.
-func (rh *ResponseHandler) WriteErrorResponsef(w http.ResponseWriter, format string, args ...any) {
+// WriteErrorf writes an error response to the HTTP response writer with a
+// formatted message. It creates a new internal error with the provided format
+// and arguments, and then calls [*ResponseHandler.WriteServiceError] to handle
+// the response.
+func (rh *ResponseHandler) WriteErrorf(w http.ResponseWriter, format string, args ...any) {
 	message := fmt.Sprintf(format, args...)
-	rh.WriteErrorResponse(w, errors.New(message))
+	rh.WriteServiceError(w, errors.New(message))
 }
 
 /*
-WriteErrorResponse writes an error response to the HTTP response writer. It
+WriteServiceError writes an error response to the HTTP response writer. It
 maps the provided error to a generic service error, determines the appropriate
 HTTP status code and JSON error code, and writes a JSON response with the
 error message.
 
-It is also safe to write any internal errors with this function, as it will log
+It is also safe to write any internal errors with this function, it will log
 the error and return a generic internal server error message to the client.
 */
-func (rh *ResponseHandler) WriteErrorResponse(w http.ResponseWriter, err error) {
+func (rh *ResponseHandler) WriteServiceError(w http.ResponseWriter, err error) {
 	var serviceErr *service.ServiceError
 
 	var statusCode int
@@ -149,7 +149,7 @@ func (rh *ResponseHandler) WriteErrorResponse(w http.ResponseWriter, err error) 
 		message = "Internal server error"
 	}
 
-	rh.WriteJSONCodeMessageResponse(w, message, statusCode, jsonCode)
+	rh.WriteJSONCodeMessage(w, message, statusCode, jsonCode)
 }
 
 func (rh *ResponseHandler) mapToGenericServiceError(err error) *service.ServiceError {
@@ -177,22 +177,22 @@ func (rh *ResponseHandler) mapToJSONCode(err *service.ServiceError) string {
 }
 
 /*
-WriteJSONCodeMessageResponse writes a JSON response with a message, status code,
+WriteJSONCodeMessage writes a JSON response with a message, status code,
 and JSON error code to the HTTP response writer.
 */
-func (rh *ResponseHandler) WriteJSONCodeMessageResponse(w http.ResponseWriter, message string, statusCode int, code string) {
+func (rh *ResponseHandler) WriteJSONCodeMessage(w http.ResponseWriter, message string, statusCode int, code string) {
 	response := map[string]string{
 		"code":    code,
 		"message": message,
 	}
-	rh.WriteJSONResponse(w, statusCode, response)
+	rh.WriteJSON(w, statusCode, response)
 }
 
 /*
-WriteJSONResponse writes a JSON response with the specified status code and
+WriteJSON writes a JSON response with the specified status code and
 data to the HTTP response writer.
 */
-func (rh *ResponseHandler) WriteJSONResponse(w http.ResponseWriter, statusCode int, data any) {
+func (rh *ResponseHandler) WriteJSON(w http.ResponseWriter, statusCode int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(data); err != nil {

@@ -16,7 +16,7 @@ func (h *EndpointHandler) registerMetaRoutes(mux *http.ServeMux) {
 }
 
 func (h *EndpointHandler) meta(w http.ResponseWriter, r *http.Request) {
-	h.responseHandler.WriteJSONResponse(w, http.StatusOK, metaResponse{
+	h.responseHandler.WriteJSON(w, http.StatusOK, metaResponse{
 		Version:   env.Version,
 		CommitSHA: env.CommitSHA,
 	})
