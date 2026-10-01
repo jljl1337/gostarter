@@ -1,6 +1,13 @@
-import { clearNode, authPage, shell, notesPage, accountPage } from "./ui.js";
+import { clearNode, authPage, shell, notesPage, accountPage, usersPage } from "./ui.js";
 
 const root = document.getElementById("app");
+
+// Ordered from the highest to the lowest role, same as the role manager of the
+// example server. Routes gated by a role are prefixed with it, so /moderator is
+// reachable by moderators and owners, and /owner by owners only.
+const roles = ["owner", "moderator", "user"];
+
+const isPrivileged = (account) => account?.role === "owner" || account?.role === "moderator";
 
 const state = {
     signedIn: false,
@@ -8,6 +15,7 @@ const state = {
     meta: null,
     account: null,
     notes: [],
+    accounts: [],
     route: "/sign-in",
     flash: null,
 };
@@ -93,6 +101,7 @@ async function loadSession() {
         state.signedIn = false;
         state.account = null;
         state.notes = [];
+        state.accounts = [];
         return false;
     }
 }
@@ -106,6 +115,12 @@ async function loadNotes() {
     const notes = await apiFetch("/notes");
     state.notes = Array.isArray(notes) ? notes : [];
     return state.notes;
+}
+
+async function loadAccounts() {
+    const accounts = await apiFetch("/moderator/accounts");
+    state.accounts = Array.isArray(accounts) ? accounts : [];
+    return state.accounts;
 }
 
 async function prepareSignIn() {
@@ -149,6 +164,7 @@ async function signOut(path) {
     state.csrfToken = "";
     state.account = null;
     state.notes = [];
+    state.accounts = [];
     navigate("/sign-in", true);
     render();
 }
@@ -185,6 +201,7 @@ async function deleteAccount() {
     state.csrfToken = "";
     state.account = null;
     state.notes = [];
+    state.accounts = [];
     navigate("/sign-in", true);
     render();
 }
@@ -210,6 +227,21 @@ async function removeNote(id) {
     render();
 }
 
+async function updateAccountRole(id, role) {
+    await apiFetch(`/owner/accounts/${id}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role }),
+    });
+    await loadAccounts();
+    setFlash(`Role updated to ${role}.`, "info");
+}
+
+async function removeAccount(id) {
+    await apiFetch(`/moderator/accounts/${id}`, { method: "DELETE" });
+    await loadAccounts();
+    render();
+}
+
 async function ensureRoute() {
     const path = currentPath();
 
@@ -227,7 +259,12 @@ async function ensureRoute() {
         return;
     }
 
-    if (path !== "/notes" && path !== "/account") {
+    const knownRoutes = ["/notes", "/account"];
+    if (isPrivileged(state.account)) {
+        knownRoutes.push("/users");
+    }
+
+    if (!knownRoutes.includes(path)) {
         navigate("/notes", true);
     }
 
@@ -237,6 +274,8 @@ async function ensureRoute() {
         await loadAccount();
     } else if (state.route === "/notes") {
         await loadNotes();
+    } else if (state.route === "/users") {
+        await loadAccounts();
     }
 }
 
@@ -272,8 +311,40 @@ function render() {
         return;
     }
 
-    const content = state.route === "/account"
-        ? accountPage({
+    const pages = {
+        "/notes": () => notesPage({
+            notes: state.notes,
+            onCreateNote: async () => {
+                try {
+                    await createNote();
+                } catch (error) {
+                    setFlash(error.message, "error");
+                }
+            },
+            onRefreshNotes: async () => {
+                try {
+                    await loadNotes();
+                    render();
+                } catch (error) {
+                    setFlash(error.message, "error");
+                }
+            },
+            onSaveNote: async (id, body) => {
+                try {
+                    await saveNote(id, body);
+                } catch (error) {
+                    setFlash(error.message, "error");
+                }
+            },
+            onDeleteNote: async (id) => {
+                try {
+                    await removeNote(id);
+                } catch (error) {
+                    setFlash(error.message, "error");
+                }
+            },
+        }),
+        "/account": () => accountPage({
             account: state.account,
             onUpdateUsername: async (form) => {
                 try {
@@ -306,42 +377,43 @@ function render() {
                     setFlash(error.message, "error");
                 }
             },
-        })
-        : notesPage({
-            notes: state.notes,
-            onCreateNote: async () => {
+        }),
+        "/users": () => usersPage({
+            accounts: state.accounts,
+            actor: state.account,
+            roles,
+            canUpdateRoles: state.account?.role === "owner",
+            onUpdateRole: async (id, role) => {
                 try {
-                    await createNote();
-                } catch (error) {
-                    setFlash(error.message, "error");
-                }
-            },
-            onRefreshNotes: async () => {
-                try {
-                    await loadNotes();
+                    await updateAccountRole(id, role);
                     render();
                 } catch (error) {
                     setFlash(error.message, "error");
                 }
             },
-            onSaveNote: async (id, body) => {
+            onDeleteAccount: async (id) => {
                 try {
-                    await saveNote(id, body);
+                    await removeAccount(id);
                 } catch (error) {
                     setFlash(error.message, "error");
                 }
             },
-            onDeleteNote: async (id) => {
+            onRefreshUsers: async () => {
                 try {
-                    await removeNote(id);
+                    await loadAccounts();
+                    render();
                 } catch (error) {
                     setFlash(error.message, "error");
                 }
             },
-        });
+        }),
+    };
+
+    const route = pages[state.route] ? state.route : "/notes";
 
     root.append(shell({
-        route: state.route === "/account" ? "/account" : "/notes",
+        route,
+        showUsers: isPrivileged(state.account),
         metaText: state.meta ? `${state.meta.version}${state.meta.commit_sha ? ` · ${state.meta.commit_sha}` : ""}` : "Loading...",
         onNavigate: async (path) => {
             navigate(path);
@@ -355,13 +427,19 @@ function render() {
                 setFlash(error.message, "error");
             }
         },
-        content,
+        content: pages[route](),
     }));
 }
 
 async function boot() {
     await loadMeta();
     await loadSession();
+
+    if (state.signedIn) {
+        // The account role decides which pages and routes are available
+        await loadAccount();
+    }
+
     await ensureRoute();
 
     if (state.signedIn && state.route === "/notes") {

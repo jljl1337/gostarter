@@ -176,7 +176,7 @@ function sidebarButton({ label, active, onClick }) {
     });
 }
 
-export function shell({ route, metaText, onNavigate, onSignOut, content }) {
+export function shell({ route, metaText, showUsers, onNavigate, onSignOut, content }) {
     return el("main", { className: "shell" },
         el("aside", { className: "sidebar" },
             el("div", { className: "sidebar-top" },
@@ -190,6 +190,9 @@ export function shell({ route, metaText, onNavigate, onSignOut, content }) {
                 el("nav", { className: "sidebar-nav", "aria-label": "Primary" },
                     sidebarButton({ label: "Notes", active: route === "/notes", onClick: () => onNavigate("/notes") }),
                     sidebarButton({ label: "Account", active: route === "/account", onClick: () => onNavigate("/account") }),
+                    showUsers
+                        ? sidebarButton({ label: "Users", active: route === "/users", onClick: () => onNavigate("/users") })
+                        : null,
                     el("button", { type: "button", className: "sidebar-button", text: "Sign out", onClick: onSignOut })
                 )
             ),
@@ -305,5 +308,90 @@ export function accountPage({ account, onUpdateUsername, onUpdatePassword, onUpd
             el("div", {}, el("span", { className: "muted", text: "Created" }), el("strong", { text: account?.createdAt || "-" }))
         ),
         el("div", { className: "form-grid" }, usernameForm, passwordForm, languageForm)
+    );
+}
+
+function userRow({ account, actor, roles, canUpdateRoles, onUpdateRole, onDeleteAccount }) {
+    // The server only lets an account be managed by a strictly higher role, so
+    // the same rule hides the controls here.
+    const manageable = roles.indexOf(account.role) > roles.indexOf(actor?.role);
+
+    const controls = el("div", { className: "user-controls" });
+
+    if (canUpdateRoles && manageable) {
+        const select = el("select", { className: "user-role" });
+        for (const role of roles) {
+            select.append(el("option", { value: role, text: role }));
+        }
+        select.value = account.role;
+
+        controls.append(
+            select,
+            el("button", {
+                type: "button",
+                className: "primary",
+                text: "Update role",
+                onClick: () => onUpdateRole(account.id, select.value),
+            })
+        );
+    }
+
+    if (manageable) {
+        controls.append(el("button", {
+            type: "button",
+            className: "danger",
+            text: "Delete",
+            onClick: () => onDeleteAccount(account.id),
+        }));
+    } else {
+        controls.append(el("span", {
+            className: "muted",
+            text: account.id === actor?.id ? "This is you" : "Same or higher role",
+        }));
+    }
+
+    return el("article", { className: "card user-card" },
+        el("div", { className: "user-head" },
+            el("div", {},
+                el("strong", { text: account.username }),
+                el("div", { className: "muted", text: account.id })
+            ),
+            el("div", { className: "note-meta" },
+                el("span", { text: `Role ${account.role}` }),
+                el("span", { text: `Language ${account.languageCode || "-"}` }),
+                el("span", { text: `Created ${account.createdAt || "unknown"}` })
+            )
+        ),
+        controls
+    );
+}
+
+export function usersPage({ accounts, actor, roles, canUpdateRoles, onUpdateRole, onDeleteAccount, onRefreshUsers }) {
+    const list = accounts.length
+        ? el("div", { className: "users-list" }, accounts.map((account) => userRow({
+            account,
+            actor,
+            roles,
+            canUpdateRoles,
+            onUpdateRole,
+            onDeleteAccount,
+        })))
+        : el("div", { className: "empty-state", text: "No accounts found." });
+
+    return el("div", {},
+        el("div", { className: "page-head" },
+            el("div", {},
+                el("p", { className: "eyebrow", text: "Users" }),
+                el("h1", { text: "Accounts" }),
+                el("p", {
+                    className: "lead",
+                    text: "Routes are gated by the first path segment: /moderator is for moderators and owners, /owner is for owners only.",
+                })
+            ),
+            el("div", { className: "button-row" },
+                el("button", { type: "button", text: "Refresh", onClick: onRefreshUsers })
+            )
+        ),
+        list
     );
 }
