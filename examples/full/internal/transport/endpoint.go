@@ -25,4 +25,5 @@ func NewEndpointHandler(
 
 func (h *EndpointHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.registerNoteRoutes(mux)
+	h.registerAccountRoleRoutes(mux)
 }
