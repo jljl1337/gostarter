@@ -7,6 +7,7 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/db"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
+	"github.com/jljl1337/gostarter/pkg/shared/role"
 
 	"github.com/jljl1337/gostarter/examples/full/internal/cron"
 	"github.com/jljl1337/gostarter/examples/full/internal/env"
@@ -36,7 +37,10 @@ func MustNewServer(envFile string) *server.Server {
 	queueManager := queue.NewDefaultQueueManager(db, queueService.GetQueueLanes()...)
 
 	responseHandler := gsTransport.NewDefaultResponseHandler()
-	service := service.NewEndpointService(db, generator.NewULID, queueManager)
+
+	roleManager := role.NewRoleManager(env.RoleOwner, env.RoleModerator, env.RoleUser)
+
+	service := service.NewEndpointService(db, generator.NewULID, queueManager, roleManager)
 	handler := transport.NewEndpointHandler(service, responseHandler)
 
 	s, err := server.NewServer(
@@ -44,6 +48,7 @@ func MustNewServer(envFile string) *server.Server {
 		server.WithGostarterMigration(),
 		server.WithAppMigrations(sql.MigrationDir),
 		server.WithCustomLanguageCodeList("en-US", "fr-FR"),
+		server.WithCustomRoleManager(roleManager),
 		server.WithDefaultScheduler(job),
 		server.WithQueueManager(queueManager),
 		server.WithStaticSite("/", web.SiteDir, "site"),

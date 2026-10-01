@@ -21,12 +21,14 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
+	"github.com/jljl1337/gostarter/pkg/shared/role"
 )
 
 const (
 	DefaultLanguageCode  = "en-US"
 	DefaultUsernameRegex = "^[a-zA-Z0-9_]{3,20}$"
 	DefaultPasswordRegex = "^[A-Za-z0-9!@#$%^&*]{8,64}$"
+	DefaultRole          = "user"
 )
 
 type Server struct {
@@ -47,6 +49,7 @@ type Server struct {
 	languageCodeList []string
 	usernameRegex    string
 	passwordRegex    string
+	roleManager      *role.RoleManager
 	hashingManager   *crypto.HashingManager
 	responseHandler  *transport.ResponseHandler
 	cookieGenerator  *transport.CookieGenerator
@@ -73,6 +76,7 @@ func NewServer(options ...Option) (*Server, error) {
 		hashingManager:   hashingManager,
 		responseHandler:  transport.NewDefaultResponseHandler(),
 		cookieGenerator:  transport.NewCookieGeneratorFromEnv(),
+		roleManager:      role.NewRoleManager(DefaultRole),
 	}
 
 	for _, option := range options {

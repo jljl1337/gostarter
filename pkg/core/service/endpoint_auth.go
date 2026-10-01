@@ -61,23 +61,23 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 
 	currentTime := generator.NowISO8601()
 
-	// ownerCount, err := queries.GetUserCountByRole(ctx, env.OwnerRole)
-	// if err != nil {
-	// 	return NewServiceErrorf(ErrCodeInternal, "failed to get owner user count: %v", err)
-	// }
+	// The very first account is promoted to the top role, so a fresh install
+	// always ends up with a top role account.
+	topRoleCount, err := queries.GetAccountCountByRole(ctx, s.roleManager.GetTopRole())
+	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to get top role account count: %v", err)
+	}
 
-	// role := env.UserRole
-	// isVerified := false
-	// if ownerCount == 0 {
-	// 	role = env.OwnerRole
-	// 	isVerified = true
-	// }
+	accountRole := s.roleManager.GetBottomRole()
+	if topRoleCount < 1 {
+		accountRole = s.roleManager.GetTopRole()
+	}
 
 	if err = queries.CreateAccount(ctx, repository.Account{
 		ID:           s.NewID(),
 		Username:     arg.Username,
 		PasswordHash: passwordHash,
-		Role:         "user", // TODO
+		Role:         accountRole,
 		LanguageCode: arg.LanguageCode,
 		CreatedAt:    currentTime,
 		UpdatedAt:    currentTime,

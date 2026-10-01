@@ -12,6 +12,7 @@ import (
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
+	"github.com/jljl1337/gostarter/pkg/shared/role"
 	"github.com/jljl1337/gostarter/pkg/shared/validation"
 	"github.com/jmoiron/sqlx"
 )
@@ -94,6 +95,20 @@ func WithCustomCookieGenerator(cookieGenerator *transport.CookieGenerator) Optio
 	}
 }
 
+func WithRoles(roleList ...string) Option {
+	return func(s *Server) error {
+		roleManager := role.NewRoleManager(roleList...)
+		return WithCustomRoleManager(roleManager)(s)
+	}
+}
+
+func WithCustomRoleManager(roleManager *role.RoleManager) Option {
+	return func(s *Server) error {
+		s.roleManager = roleManager
+		return nil
+	}
+}
+
 func WithDefaultScheduler(jobList ...cron.Job) Option {
 	return func(s *Server) error {
 		schedulerService := service.NewSchedulerService(s.db)
@@ -160,7 +175,7 @@ func WithStaticSite(path string, siteFs fs.FS, subPath string) Option {
 func WithDefaultMiddleware() Option {
 	return func(s *Server) error {
 		middlewareService := service.NewMiddlewareService(s.db)
-		middlewareProvider := transport.NewMiddlewareProvider(middlewareService, s.responseHandler)
+		middlewareProvider := transport.NewMiddlewareProvider(middlewareService, s.responseHandler, s.roleManager)
 		return WithMiddleware(middlewareProvider.GetMiddlewareList()...)(s)
 	}
 }
@@ -179,7 +194,7 @@ func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 			return fmt.Errorf("failed to create validation manager: %w", err)
 		}
 
-		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, validationManager)
+		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, validationManager, s.roleManager)
 		endpointHandler := transport.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
 		handlerList = append([]transport.Handler{endpointHandler}, handlerList...)
 		return WithApiHandler("/api", handlerList...)(s)

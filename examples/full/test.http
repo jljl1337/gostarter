@@ -3,6 +3,13 @@
 @password = 123412341234
 @sessionToken = vTUGEBNFNx5s3kdjXmriq8bAEJWeTh2i
 @csrfToken = hene1Wfu0IuNNsj5WdW7GiFUjzNGZGht
+@ownerAccountID = 01K4H4N8Q2X9ZQ3F7M1B6VD8WP
+@moderatorAccountID = 01K4H4P0T5Y7RC8K2D3F9XH4JB
+@userAccountID = 01K4H4Q3V6X8SD9L3E4G0YJ5KC
+@moderatorUsername = moderator1234
+@moderatorPassword = 123412341234
+@moderatorSessionToken = WXhZSk9QTlJKV1dXV1QzUFlaGV5MTIzNA
+@moderatorCSRFToken = aW5nd0Nsb21vZGVy
 
 ############################## Health
 
@@ -88,3 +95,109 @@ Content-Type: application/json
 DELETE {{baseUrl}}/api/accounts/me
 Cookie: session_token={{sessionToken}}
 X-CSRF-Token: {{csrfToken}}
+
+############################## Roles
+
+# The first account created is the owner, every other account is a user.
+# Routes are gated by the first path segment: "/owner" is for owners only,
+# "/moderator" is for moderators and owners, anything else is for everyone.
+# A role below the required one gets a 404, as if the route did not exist.
+
+# Sign up a second account, it is created with the "user" role
+
+POST {{baseUrl}}/api/auth/sign-up
+Content-Type: application/json
+
+{
+  "username": "regularuser123",
+  "password": "123412341234",
+  "languageCode": "en-US"
+}
+
+###
+
+# Sign in the owner (the account of the very first sign up) and copy the
+# account ID of the regular user from the list below
+
+GET {{baseUrl}}/api/moderator/accounts
+Cookie: session_token={{sessionToken}}
+
+###
+
+# Owner promotes the regular user to moderator, only owners can do this
+
+PATCH {{baseUrl}}/api/owner/accounts/{{userAccountID}}/role
+Cookie: session_token={{sessionToken}}
+X-CSRF-Token: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "role": "moderator"
+}
+
+###
+
+# Same request as a moderator, or as a user: 404 Not Found
+
+PATCH {{baseUrl}}/api/owner/accounts/{{userAccountID}}/role
+Cookie: session_token={{moderatorSessionToken}}
+X-CSRF-Token: {{moderatorCSRFToken}}
+Content-Type: application/json
+
+{
+  "role": "moderator"
+}
+
+###
+
+# Sign in the promoted account to get a session of its own
+
+POST {{baseUrl}}/api/auth/pre-session
+
+###
+
+POST {{baseUrl}}/api/auth/sign-in
+Cookie: session_token={{moderatorSessionToken}}
+X-CSRF-Token: {{moderatorCSRFToken}}
+Content-Type: application/json
+
+{
+  "username": "{{moderatorUsername}}",
+  "password": "{{moderatorPassword}}"
+}
+
+###
+
+# Moderator lists the accounts, allowed for moderators and owners
+
+GET {{baseUrl}}/api/moderator/accounts
+Cookie: session_token={{moderatorSessionToken}}
+
+###
+
+# Moderator deletes a user
+
+DELETE {{baseUrl}}/api/moderator/accounts/{{userAccountID}}
+Cookie: session_token={{moderatorSessionToken}}
+X-CSRF-Token: {{moderatorCSRFToken}}
+
+###
+
+# Moderator deletes an owner, rejected with 403 Forbidden
+
+DELETE {{baseUrl}}/api/moderator/accounts/{{ownerAccountID}}
+Cookie: session_token={{moderatorSessionToken}}
+X-CSRF-Token: {{moderatorCSRFToken}}
+
+###
+
+# Moderator promotes a user, rejected with 404 Not Found
+
+PATCH {{baseUrl}}/api/owner/accounts/{{userAccountID}}/role
+Cookie: session_token={{moderatorSessionToken}}
+X-CSRF-Token: {{moderatorCSRFToken}}
+Content-Type: application/json
+
+{
+  "role": "moderator"
+}
