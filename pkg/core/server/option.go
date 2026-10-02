@@ -53,13 +53,6 @@ func WithCustomIDGenerator(idGenerator func() string) Option {
 	}
 }
 
-func WithCustomLanguageCodeList(languageCodeList ...string) Option {
-	return func(s *Server) error {
-		s.languageCodeList = languageCodeList
-		return nil
-	}
-}
-
 func WithCustomUsernameRegex(usernameRegex string) Option {
 	return func(s *Server) error {
 		s.usernameRegex = usernameRegex
@@ -189,7 +182,7 @@ func WithMiddleware(middlewareList ...transport.Middleware) Option {
 
 func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
-		validationManager, err := validation.NewValidationManager(s.languageCodeList, s.usernameRegex, s.passwordRegex)
+		validationManager, err := validation.NewValidationManager(s.usernameRegex, s.passwordRegex)
 		if err != nil {
 			return fmt.Errorf("failed to create validation manager: %w", err)
 		}

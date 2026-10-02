@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	DefaultLanguageCode  = "en-US"
 	DefaultUsernameRegex = "^[a-zA-Z0-9_]{3,20}$"
 	DefaultPasswordRegex = "^[A-Za-z0-9!@#$%^&*]{8,64}$"
 	DefaultRole          = "user"
@@ -45,14 +44,13 @@ type Server struct {
 	httpServer              *http.Server
 	gracefulShutdownTimeout time.Duration
 
-	idGenerator      func() string
-	languageCodeList []string
-	usernameRegex    string
-	passwordRegex    string
-	roleManager      *role.RoleManager
-	hashingManager   *crypto.HashingManager
-	responseHandler  *transport.ResponseHandler
-	cookieGenerator  *transport.CookieGenerator
+	idGenerator     func() string
+	usernameRegex   string
+	passwordRegex   string
+	roleManager     *role.RoleManager
+	hashingManager  *crypto.HashingManager
+	responseHandler *transport.ResponseHandler
+	cookieGenerator *transport.CookieGenerator
 }
 
 func NewServer(options ...Option) (*Server, error) {
@@ -69,14 +67,13 @@ func NewServer(options ...Option) (*Server, error) {
 		mux:                     http.NewServeMux(),
 		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
 
-		idGenerator:      generator.NewULID,
-		languageCodeList: []string{DefaultLanguageCode},
-		usernameRegex:    DefaultUsernameRegex,
-		passwordRegex:    DefaultPasswordRegex,
-		hashingManager:   hashingManager,
-		responseHandler:  transport.NewDefaultResponseHandler(),
-		cookieGenerator:  transport.NewCookieGeneratorFromEnv(),
-		roleManager:      role.NewRoleManager(DefaultRole),
+		idGenerator:     generator.NewULID,
+		usernameRegex:   DefaultUsernameRegex,
+		passwordRegex:   DefaultPasswordRegex,
+		hashingManager:  hashingManager,
+		responseHandler: transport.NewDefaultResponseHandler(),
+		cookieGenerator: transport.NewCookieGeneratorFromEnv(),
+		roleManager:     role.NewRoleManager(DefaultRole),
 	}
 
 	for _, option := range options {

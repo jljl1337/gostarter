@@ -12,7 +12,6 @@ type Account struct {
 	Username     string `json:"username" db:"username"`
 	PasswordHash string `json:"passwordHash" db:"password_hash"`
 	Role         string `json:"role" db:"role"`
-	LanguageCode string `json:"languageCode" db:"language_code"`
 	CreatedAt    string `json:"createdAt" db:"created_at"`
 	UpdatedAt    string `json:"updatedAt" db:"updated_at"`
 }

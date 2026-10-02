@@ -8,18 +8,16 @@ import (
 )
 
 type getCurrentAccountResponse struct {
-	ID           string `json:"id"`
-	Username     string `json:"username"`
-	Role         string `json:"role"`
-	LanguageCode string `json:"languageCode"`
-	CreatedAt    string `json:"createdAt"`
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Role      string `json:"role"`
+	CreatedAt string `json:"createdAt"`
 }
 
 func (h *EndpointHandler) registerAccountRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /accounts/me", h.getCurrentAccount)
 	mux.HandleFunc("PATCH /accounts/me/username", h.updateUsername)
 	mux.HandleFunc("PATCH /accounts/me/password", h.updatePassword)
-	mux.HandleFunc("PATCH /accounts/me/language", h.updateLanguage)
 	mux.HandleFunc("DELETE /accounts/me", h.deleteCurrentAccount)
 }
 
@@ -33,11 +31,10 @@ func (h *EndpointHandler) getCurrentAccount(w http.ResponseWriter, r *http.Reque
 
 	// Respond to the client
 	response := getCurrentAccountResponse{
-		ID:           account.ID,
-		Username:     account.Username,
-		Role:         account.Role,
-		LanguageCode: account.LanguageCode,
-		CreatedAt:    account.CreatedAt,
+		ID:        account.ID,
+		Username:  account.Username,
+		Role:      account.Role,
+		CreatedAt: account.CreatedAt,
 	}
 	h.responseHandler.WriteJSON(w, http.StatusOK, response)
 }
@@ -108,39 +105,6 @@ func (h *EndpointHandler) updatePassword(w http.ResponseWriter, r *http.Request)
 
 	// Respond to the client
 	h.responseHandler.WriteMessage(w, "Password updated successfully", http.StatusOK)
-}
-
-func (h *EndpointHandler) updateLanguage(w http.ResponseWriter, r *http.Request) {
-	// Input validation
-	var req struct {
-		LanguageCode string `json:"languageCode"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.responseHandler.WriteMessage(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	if req.LanguageCode == "" {
-		h.responseHandler.WriteMessage(w, "Language code is required", http.StatusBadRequest)
-		return
-	}
-
-	// Process the request
-	account := GetAccountFromContext(r.Context())
-	if account == nil {
-		h.responseHandler.WriteErrorf(w, "failed to get account from context")
-		return
-	}
-
-	if err := h.service.UpdateLanguageByID(r.Context(), service.UpdateLanguageByIDParams{
-		Account:      *account,
-		LanguageCode: req.LanguageCode,
-	}); err != nil {
-		h.responseHandler.WriteServiceError(w, err)
-		return
-	}
-
-	// Respond to the client
-	h.responseHandler.WriteMessage(w, "Language updated successfully", http.StatusOK)
 }
 
 func (h *EndpointHandler) deleteCurrentAccount(w http.ResponseWriter, r *http.Request) {
