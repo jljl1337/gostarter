@@ -5,9 +5,12 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -28,6 +31,8 @@ const (
 	DefaultUsernameRegex = "^[a-zA-Z0-9_]{3,20}$"
 	DefaultPasswordRegex = "^[A-Za-z0-9!@#$%^&*]{8,64}$"
 	DefaultRole          = "user"
+	DefaultSocketPerm    = os.FileMode(0o666)
+	socketProbeTimeout   = 500 * time.Millisecond
 )
 
 type Server struct {
@@ -41,6 +46,8 @@ type Server struct {
 	mux                     *http.ServeMux
 	apiMiddleware           transport.Middleware
 	port                    string
+	socketPath              string
+	socketPerm              os.FileMode
 	httpServer              *http.Server
 	gracefulShutdownTimeout time.Duration
 
@@ -59,10 +66,19 @@ func NewServer(options ...Option) (*Server, error) {
 		return nil, fmt.Errorf("failed to create hashing manager: %w", err)
 	}
 
+	socketPerm := DefaultSocketPerm
+	if env.SocketPath != "" {
+		if socketPerm, err = parseSocketPerm(env.SocketPerm); err != nil {
+			return nil, fmt.Errorf("failed to create server: %w", err)
+		}
+	}
+
 	server := &Server{
 		runMigrations:           false,
 		runGostarterMigrations:  false,
 		port:                    env.Port,
+		socketPath:              env.SocketPath,
+		socketPerm:              socketPerm,
 		apiMux:                  http.NewServeMux(),
 		mux:                     http.NewServeMux(),
 		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
@@ -147,6 +163,21 @@ func (s *Server) Start() error {
 		}
 	}
 
+	if s.socketPath != "" {
+		listener, err := s.listenUnixSocket()
+		if err != nil {
+			return err
+		}
+		defer s.removeSocketFile()
+
+		log.Infof("Starting http server on unix socket %s", s.socketPath)
+		if err := s.httpServer.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("failed to start http server: %w", err)
+		}
+
+		return nil
+	}
+
 	log.Infof("Starting http server on %s", s.httpServer.Addr)
 	err := s.httpServer.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -154,6 +185,82 @@ func (s *Server) Start() error {
 	}
 
 	return nil
+}
+
+// parseSocketPerm parses an octal file mode, such as "0666", as used by the
+// socket permission environment variable.
+func parseSocketPerm(perm string) (os.FileMode, error) {
+	value, err := strconv.ParseUint(perm, 8, 32)
+	if err != nil {
+		return 0, fmt.Errorf("invalid socket permission %q, expected an octal file mode such as 0666: %w", perm, err)
+	}
+
+	return os.FileMode(value), nil
+}
+
+// listenUnixSocket creates the unix socket, making its parent directory when
+// missing, so paths under directories like /run work out of the box.
+func (s *Server) listenUnixSocket() (net.Listener, error) {
+	if dir := filepath.Dir(s.socketPath); dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, fmt.Errorf("failed to create socket directory %s: %w", dir, err)
+		}
+	}
+
+	if err := s.removeStaleSocketFile(); err != nil {
+		return nil, err
+	}
+
+	listener, err := net.Listen("unix", s.socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen on unix socket %s: %w", s.socketPath, err)
+	}
+
+	if err := os.Chmod(s.socketPath, s.socketPerm); err != nil {
+		if closeErr := listener.Close(); closeErr != nil {
+			log.Errorf("Failed to close unix socket listener: %v", closeErr)
+		}
+		s.removeSocketFile()
+		return nil, fmt.Errorf("failed to set permission on unix socket %s: %w", s.socketPath, err)
+	}
+
+	return listener, nil
+}
+
+// removeStaleSocketFile deletes the socket file left behind by a previous
+// process, but refuses to take over a socket that is still being served.
+func (s *Server) removeStaleSocketFile() error {
+	if _, err := os.Stat(s.socketPath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("failed to stat unix socket %s: %w", s.socketPath, err)
+	}
+
+	if conn, err := net.DialTimeout("unix", s.socketPath, socketProbeTimeout); err == nil {
+		if closeErr := conn.Close(); closeErr != nil {
+			log.Errorf("Failed to close unix socket probe connection: %v", closeErr)
+		}
+		return fmt.Errorf("unix socket %s is already in use", s.socketPath)
+	}
+
+	if err := os.Remove(s.socketPath); err != nil {
+		return fmt.Errorf("failed to remove stale unix socket %s: %w", s.socketPath, err)
+	}
+
+	return nil
+}
+
+// removeSocketFile unlinks the socket, and must only be called once this
+// process has created it, never when another server still owns the path.
+func (s *Server) removeSocketFile() {
+	if s.socketPath == "" {
+		return
+	}
+
+	if err := os.Remove(s.socketPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Errorf("Failed to remove unix socket %s: %v", s.socketPath, err)
+	}
 }
 
 func (s *Server) Stop(ctx context.Context) error {
