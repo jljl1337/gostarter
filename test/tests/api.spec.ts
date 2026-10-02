@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 const password = 'P@ssw0rd!';
 
 type Auth = { cookie: string; csrf: string };
-type Account = { id: string; username: string; role: string; languageCode: string; createdAt: string };
+type Account = { id: string; username: string; role: string; createdAt: string };
 
 // Helper to build full url for API paths
 function api(path: string) {
@@ -26,7 +26,6 @@ async function signUpAndSignIn(request: APIRequestContext, username: string, acc
     data: JSON.stringify({
       username,
       password: accountPassword,
-      languageCode: 'en-US',
     }),
   });
   expect(signUp.status()).toBe(201);
@@ -72,7 +71,6 @@ test.describe('Full example API', () => {
       data: JSON.stringify({
         username,
         password,
-        languageCode: 'en-US',
       }),
     });
     expect(signUp.status()).toBe(201);
@@ -140,19 +138,6 @@ test.describe('Full example API', () => {
     expect(me2.status()).toBe(200);
     const me2Json = await me2.json();
     expect(me2Json.username).toBe(newUsername);
-
-    // Update language code
-    const updLang = await baseRequest.patch(api('/accounts/me/language'), {
-      headers: { ...authHeaders, 'Content-Type': 'application/json' },
-      data: JSON.stringify({ languageCode: 'fr-FR' }),
-    });
-    expect(updLang.status()).toBe(200);
-
-    // verify updated
-    const me3 = await baseRequest.get(api('/accounts/me'), { headers: authHeaders });
-    expect(me3.status()).toBe(200);
-    const me3Json = await me3.json();
-    expect(me3Json.languageCode).toBe('fr-FR');
 
     // Update password
     const updPass = await baseRequest.patch(api('/accounts/me/password'), {

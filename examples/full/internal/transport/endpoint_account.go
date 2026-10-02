@@ -12,20 +12,18 @@ import (
 )
 
 type accountResponse struct {
-	ID           string `json:"id"`
-	Username     string `json:"username"`
-	Role         string `json:"role"`
-	LanguageCode string `json:"languageCode"`
-	CreatedAt    string `json:"createdAt"`
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Role      string `json:"role"`
+	CreatedAt string `json:"createdAt"`
 }
 
 func newAccountResponse(account repository.Account) accountResponse {
 	return accountResponse{
-		ID:           account.ID,
-		Username:     account.Username,
-		Role:         account.Role,
-		LanguageCode: account.LanguageCode,
-		CreatedAt:    account.CreatedAt,
+		ID:        account.ID,
+		Username:  account.Username,
+		Role:      account.Role,
+		CreatedAt: account.CreatedAt,
 	}
 }
 

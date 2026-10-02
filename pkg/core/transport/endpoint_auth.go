@@ -9,9 +9,8 @@ import (
 )
 
 type signUpRequest struct {
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	LanguageCode string `json:"languageCode"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type signInRequest struct {
@@ -45,15 +44,9 @@ func (h *EndpointHandler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.LanguageCode == "" {
-		h.responseHandler.WriteMessage(w, "Language code is required", http.StatusBadRequest)
-		return
-	}
-
 	if err := h.service.SignUp(r.Context(), service.SignUpParams{
-		Username:     req.Username,
-		Password:     req.Password,
-		LanguageCode: req.LanguageCode,
+		Username: req.Username,
+		Password: req.Password,
 	}); err != nil {
 		h.responseHandler.WriteServiceError(w, err)
 		return

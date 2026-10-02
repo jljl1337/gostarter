@@ -115,45 +115,6 @@ func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePass
 	return nil
 }
 
-type UpdateLanguageByIDParams struct {
-	Account      repository.Account
-	LanguageCode string
-}
-
-func (s *EndpointService) UpdateLanguageByID(ctx context.Context, arg UpdateLanguageByIDParams) error {
-	languageCodeValid := s.validationManager.ValidateLanguageCode(arg.LanguageCode)
-	if !languageCodeValid {
-		return NewServiceError(ErrCodeUnprocessable, "invalid language code")
-	}
-
-	if arg.Account.LanguageCode == arg.LanguageCode {
-		return NewServiceError(ErrCodeUnprocessable, "new language code must be different from the old language code")
-	}
-
-	tx, err := s.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
-	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
-
-	err = queries.UpdateAccountLanguage(ctx, repository.UpdateAccountLanguageParams{
-		ID:           arg.Account.ID,
-		LanguageCode: arg.LanguageCode,
-		UpdatedAt:    generator.NowISO8601(),
-	})
-	if err != nil {
-		return NewServiceErrorf(ErrCodeInternal, "failed to update language: %v", err)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
-	}
-
-	return nil
-}
-
 func (s *EndpointService) DeleteAccountByID(ctx context.Context, account repository.Account) error {
 	// Delete user record
 	tx, err := s.db.BeginTxx(ctx, nil)

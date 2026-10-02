@@ -12,9 +12,8 @@ import (
 )
 
 type SignUpParams struct {
-	Username     string
-	Password     string
-	LanguageCode string
+	Username string
+	Password string
 }
 
 func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
@@ -26,11 +25,6 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 	passwordValid := s.validationManager.ValidatePassword(arg.Password)
 	if !passwordValid {
 		return NewServiceError(ErrCodeUnprocessable, "invalid password format")
-	}
-
-	languageCodeValid := s.validationManager.ValidateLanguageCode(arg.LanguageCode)
-	if !languageCodeValid {
-		return NewServiceError(ErrCodeUnprocessable, "invalid language code")
 	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
@@ -78,7 +72,6 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 		Username:     arg.Username,
 		PasswordHash: passwordHash,
 		Role:         accountRole,
-		LanguageCode: arg.LanguageCode,
 		CreatedAt:    currentTime,
 		UpdatedAt:    currentTime,
 	}); err != nil {

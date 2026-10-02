@@ -3,12 +3,11 @@ package validation
 import "regexp"
 
 type ValidationManager struct {
-	languageCodeMap map[string]bool
-	usernameRegex   *regexp.Regexp
-	passwordRegex   *regexp.Regexp
+	usernameRegex *regexp.Regexp
+	passwordRegex *regexp.Regexp
 }
 
-func NewValidationManager(languageCodeList []string, usernameRegex string, passwordRegex string) (*ValidationManager, error) {
+func NewValidationManager(usernameRegex string, passwordRegex string) (*ValidationManager, error) {
 	usernameRegexp, err := regexp.Compile(usernameRegex)
 	if err != nil {
 		return nil, err
@@ -19,20 +18,10 @@ func NewValidationManager(languageCodeList []string, usernameRegex string, passw
 		return nil, err
 	}
 
-	languageCodeMap := make(map[string]bool)
-	for _, code := range languageCodeList {
-		languageCodeMap[code] = true
-	}
-
 	return &ValidationManager{
-		languageCodeMap: languageCodeMap,
-		usernameRegex:   usernameRegexp,
-		passwordRegex:   passwordRegexp,
+		usernameRegex: usernameRegexp,
+		passwordRegex: passwordRegexp,
 	}, nil
-}
-
-func (v *ValidationManager) ValidateLanguageCode(languageCode string) bool {
-	return v.languageCodeMap[languageCode]
 }
 
 func (v *ValidationManager) ValidateUsername(username string) bool {

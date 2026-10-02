@@ -10,7 +10,6 @@ const createAccount = `
 		username,
 		password_hash,
 		role,
-		language_code,
 		created_at,
 		updated_at
 	) VALUES (
@@ -18,7 +17,6 @@ const createAccount = `
 		:username,
 		:password_hash,
 		:role,
-		:language_code,
 		:created_at,
 		:updated_at
 	)
@@ -123,26 +121,6 @@ type UpdateAccountUsernameParams struct {
 
 func (q *Queries) UpdateAccountUsername(ctx context.Context, arg UpdateAccountUsernameParams) error {
 	return q.NamedExecOneRowContext(ctx, updateAccountUsername, arg)
-}
-
-const updateAccountLanguage = `
-	UPDATE
-		gs_account
-	SET
-		language_code = :language_code,
-		updated_at = :updated_at
-	WHERE
-		id = :id
-`
-
-type UpdateAccountLanguageParams struct {
-	LanguageCode string `db:"language_code"`
-	UpdatedAt    string `db:"updated_at"`
-	ID           string `db:"id"`
-}
-
-func (q *Queries) UpdateAccountLanguage(ctx context.Context, arg UpdateAccountLanguageParams) error {
-	return q.NamedExecOneRowContext(ctx, updateAccountLanguage, arg)
 }
 
 const deleteAccount = `
