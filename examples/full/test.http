@@ -26,8 +26,7 @@ Content-Type: application/json
 
 {
   "username": "{{username}}",
-  "password": "{{password}}",
-  "languageCode": "en-US"
+  "password": "{{password}}"
 }
 
 ###
@@ -81,17 +80,6 @@ Content-Type: application/json
 
 ###
 
-PATCH {{baseUrl}}/api/accounts/me/language
-Cookie: session_token={{sessionToken}}
-X-CSRF-Token: {{csrfToken}}
-Content-Type: application/json
-
-{
-  "languageCode": "fr-FR"
-}
-
-###
-
 DELETE {{baseUrl}}/api/accounts/me
 Cookie: session_token={{sessionToken}}
 X-CSRF-Token: {{csrfToken}}
@@ -110,8 +98,7 @@ Content-Type: application/json
 
 {
   "username": "regularuser123",
-  "password": "123412341234",
-  "languageCode": "en-US"
+  "password": "123412341234"
 }
 
 ###

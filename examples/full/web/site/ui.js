@@ -72,21 +72,6 @@ export function textareaField({ label, name, value = "", required = true, placeh
     return el("label", { className: "field" }, el("span", { text: label }), input);
 }
 
-export function selectField({ label, name, value = "", required = true, options = [] }) {
-    const input = el("select", {
-        name,
-        required,
-    });
-
-    for (const option of options) {
-        input.append(el("option", { value: option.value, text: option.label }));
-    }
-
-    input.value = value;
-
-    return el("label", { className: "field" }, el("span", { text: label }), input);
-}
-
 export function flashMessage(flash) {
     if (!flash) {
         return null;
@@ -116,19 +101,6 @@ export function authPage({ mode, onSignIn, onSignUp, onNavigateAuth, flash, meta
             required: true,
         })
     );
-
-    if (isSignUp) {
-        form.append(selectField({
-            label: "Language code",
-            name: "languageCode",
-            value: "en-US",
-            required: true,
-            options: [
-                { value: "en-US", label: "en-US" },
-                { value: "fr-FR", label: "fr-FR" },
-            ],
-        }));
-    }
 
     form.append(
         el("button", {
@@ -249,7 +221,7 @@ export function notesPage({ notes, onCreateNote, onRefreshNotes, onSaveNote, onD
     );
 }
 
-export function accountPage({ account, onUpdateUsername, onUpdatePassword, onUpdateLanguage, onDeleteAccount }) {
+export function accountPage({ account, onUpdateUsername, onUpdatePassword, onDeleteAccount }) {
     const usernameForm = el("form", { className: "card form-card" });
     usernameForm.append(
         el("h2", { text: "Update username" }),
@@ -273,26 +245,6 @@ export function accountPage({ account, onUpdateUsername, onUpdatePassword, onUpd
         await onUpdatePassword(passwordForm);
     });
 
-    const languageForm = el("form", { className: "card form-card" });
-    languageForm.append(
-        el("h2", { text: "Update language" }),
-        selectField({
-            label: "Language code",
-            name: "languageCode",
-            value: account?.languageCode || "en-US",
-            required: true,
-            options: [
-                { value: "en-US", label: "en-US" },
-                { value: "fr-FR", label: "fr-FR" },
-            ],
-        }),
-        el("button", { type: "submit", className: "primary", text: "Save language" })
-    );
-    languageForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        await onUpdateLanguage(languageForm);
-    });
-
     return el("div", {},
         el("div", { className: "page-head" },
             el("div", {},
@@ -304,10 +256,9 @@ export function accountPage({ account, onUpdateUsername, onUpdatePassword, onUpd
         ),
         el("div", { className: "card account-summary" },
             el("div", {}, el("span", { className: "muted", text: "Role" }), el("strong", { text: account?.role || "-" })),
-            el("div", {}, el("span", { className: "muted", text: "Language" }), el("strong", { text: account?.languageCode || "-" })),
             el("div", {}, el("span", { className: "muted", text: "Created" }), el("strong", { text: account?.createdAt || "-" }))
         ),
-        el("div", { className: "form-grid" }, usernameForm, passwordForm, languageForm)
+        el("div", { className: "form-grid" }, usernameForm, passwordForm)
     );
 }
 
@@ -358,7 +309,6 @@ function userRow({ account, actor, roles, canUpdateRoles, onUpdateRole, onDelete
             ),
             el("div", { className: "note-meta" },
                 el("span", { text: `Role ${account.role}` }),
-                el("span", { text: `Language ${account.languageCode || "-"}` }),
                 el("span", { text: `Created ${account.createdAt || "unknown"}` })
             )
         ),

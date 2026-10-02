@@ -186,15 +186,6 @@ async function updatePassword(form) {
     setFlash("Password updated.", "info");
 }
 
-async function updateLanguage(form) {
-    await apiFetch("/accounts/me/language", {
-        method: "PATCH",
-        body: JSON.stringify(formValues(form)),
-    });
-    await loadAccount();
-    setFlash("Language updated.", "info");
-}
-
 async function deleteAccount() {
     await apiFetch("/accounts/me", { method: "DELETE" });
     state.signedIn = false;
@@ -357,14 +348,6 @@ function render() {
             onUpdatePassword: async (form) => {
                 try {
                     await updatePassword(form);
-                    render();
-                } catch (error) {
-                    setFlash(error.message, "error");
-                }
-            },
-            onUpdateLanguage: async (form) => {
-                try {
-                    await updateLanguage(form);
                     render();
                 } catch (error) {
                     setFlash(error.message, "error");
