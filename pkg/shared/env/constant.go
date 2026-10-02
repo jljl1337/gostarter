@@ -42,6 +42,8 @@ var (
 	LogLevel                    int
 	LogHealthCheck              bool
 	Port                        string
+	SocketPath                  string
+	SocketPerm                  string
 	GracefulShutdownTimeoutSec  int
 	CORSOrigins                 string
 	PasswordHashingAlgorithm    string
@@ -95,6 +97,8 @@ func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warnin
 	LogLevel = MustGetInt(prefix("LOG_LEVEL", addPrefix), 0)
 	LogHealthCheck = MustGetBool(prefix("LOG_HEALTH_CHECK", addPrefix), false)
 	Port = MustGetString(prefix("PORT", addPrefix), "3000")
+	SocketPath = MustGetString(prefix("SOCKET_PATH", addPrefix), "")
+	SocketPerm = MustGetString(prefix("SOCKET_PERM", addPrefix), "0666")
 	GracefulShutdownTimeoutSec = MustGetInt(prefix("GRACEFUL_SHUTDOWN_TIMEOUT_SEC", addPrefix), 30)
 	CORSOrigins = MustGetString(prefix("CORS_ORIGINS", addPrefix), "*")
 	PasswordHashingAlgorithm = MustGetString(prefix("PASSWORD_HASHING_ALGORITHM", addPrefix), PasswordHashingAlgorithmArgon2id)

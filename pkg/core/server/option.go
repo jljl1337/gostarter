@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
@@ -146,6 +147,25 @@ func WithPort(port string) Option {
 	}
 }
 
+// WithUnixSocket makes the HTTP server listen on the unix domain socket at path
+// instead of a TCP port, so the server is only reachable by processes able to
+// open that file. Must be applied before WithHttpServer.
+func WithUnixSocket(path string) Option {
+	return func(s *Server) error {
+		s.socketPath = path
+		return nil
+	}
+}
+
+// WithUnixSocketPerm sets the file mode of the created unix socket, allowing
+// clients running as another user to connect. Defaults to 0666.
+func WithUnixSocketPerm(perm os.FileMode) Option {
+	return func(s *Server) error {
+		s.socketPerm = perm
+		return nil
+	}
+}
+
 func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 	return func(s *Server) error {
 		s.gracefulShutdownTimeout = timeout
@@ -207,8 +227,13 @@ func WithApiHandler(subpath string, handlerList ...transport.Handler) Option {
 
 func WithHttpServer() Option {
 	return func(s *Server) error {
+		addr := ":" + s.port
+		if s.socketPath != "" {
+			addr = s.socketPath
+		}
+
 		s.httpServer = &http.Server{
-			Addr:    ":" + s.port,
+			Addr:    addr,
 			Handler: s.mux,
 		}
 		return nil
