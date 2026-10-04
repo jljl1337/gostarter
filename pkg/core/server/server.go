@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"syscall"
 	"time"
@@ -52,8 +53,8 @@ type Server struct {
 	gracefulShutdownTimeout time.Duration
 
 	idGenerator     func() string
-	usernameRegex   string
-	passwordRegex   string
+	usernameRegex   *regexp.Regexp
+	passwordRegex   *regexp.Regexp
 	roleManager     *role.RoleManager
 	hashingManager  *crypto.HashingManager
 	responseHandler *transport.ResponseHandler
@@ -73,6 +74,16 @@ func NewServer(options ...Option) (*Server, error) {
 		}
 	}
 
+	usernameRegex, err := regexp.Compile(DefaultUsernameRegex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile default username regex: %w", err)
+	}
+
+	passwordRegex, err := regexp.Compile(DefaultPasswordRegex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile default password regex: %w", err)
+	}
+
 	server := &Server{
 		runMigrations:           false,
 		runGostarterMigrations:  false,
@@ -84,8 +95,8 @@ func NewServer(options ...Option) (*Server, error) {
 		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
 
 		idGenerator:     generator.NewULID,
-		usernameRegex:   DefaultUsernameRegex,
-		passwordRegex:   DefaultPasswordRegex,
+		usernameRegex:   usernameRegex,
+		passwordRegex:   passwordRegex,
 		hashingManager:  hashingManager,
 		responseHandler: transport.NewDefaultResponseHandler(),
 		cookieGenerator: transport.NewCookieGeneratorFromEnv(),
