@@ -218,7 +218,13 @@ func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 			return fmt.Errorf("failed to create validation manager: %w", err)
 		}
 
-		endpointService := service.NewEndpointService(s.db, s.idGenerator, s.hashingManager, validationManager, s.roleManager)
+		endpointService := service.NewEndpointService(service.EndpointServiceConfig{
+			DB:                s.db,
+			IDGenerator:       s.idGenerator,
+			HashingManager:    s.hashingManager,
+			ValidationManager: validationManager,
+			RoleManager:       s.roleManager,
+		})
 		endpointHandler := transport.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
 		handlerList = append([]transport.Handler{endpointHandler}, handlerList...)
 		return WithApiHandler("/api", handlerList...)(s)

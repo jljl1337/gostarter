@@ -6,6 +6,13 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type EndpointServiceConfig struct {
+	DB           *sqlx.DB
+	IDGenerator  func() string
+	QueueManager *queue.QueueManager
+	RoleManager  *role.RoleManager
+}
+
 type EndpointService struct {
 	db           *sqlx.DB
 	idGenerator  func() string
@@ -13,11 +20,11 @@ type EndpointService struct {
 	roleManager  *role.RoleManager
 }
 
-func NewEndpointService(db *sqlx.DB, idGenerator func() string, queueManager *queue.QueueManager, roleManager *role.RoleManager) *EndpointService {
+func NewEndpointService(config EndpointServiceConfig) *EndpointService {
 	return &EndpointService{
-		db:           db,
-		idGenerator:  idGenerator,
-		queueManager: queueManager,
-		roleManager:  roleManager,
+		db:           config.DB,
+		idGenerator:  config.IDGenerator,
+		queueManager: config.QueueManager,
+		roleManager:  config.RoleManager,
 	}
 }
