@@ -40,7 +40,12 @@ func MustNewServer(envFile string) *server.Server {
 
 	roleManager := role.NewRoleManager(env.RoleOwner, env.RoleModerator, env.RoleUser)
 
-	service := service.NewEndpointService(db, generator.NewULID, queueManager, roleManager)
+	service := service.NewEndpointService(service.EndpointServiceConfig{
+		DB:           db,
+		IDGenerator:  generator.NewULID,
+		QueueManager: queueManager,
+		RoleManager:  roleManager,
+	})
 	handler := transport.NewEndpointHandler(service, responseHandler)
 
 	s, err := server.NewServer(
