@@ -1,7 +1,5 @@
 package env
 
-import "net/http"
-
 const (
 	DatabaseDriverSQLite             = "sqlite"
 	DatabaseDriverPostgreSQL         = "postgresql"
@@ -27,6 +25,7 @@ var (
 
 	// Plain variables from environment variables
 
+	DatabaseDriver              string
 	DataDir                     string
 	LiveDataDir                 string
 	BackupDataDir               string
@@ -56,6 +55,7 @@ var (
 	SessionCookieName           string
 	SessionCookieHttpOnly       bool
 	SessionCookieSecure         bool
+	SessionCookieSameSite       string
 	SessionTokenLength          int
 	SessionTokenCharset         string
 	SessionLifetimeMin          int
@@ -63,11 +63,6 @@ var (
 	PreSessionLifetimeMin       int
 	CSRFTokenLength             int
 	CSRFTokenCharset            string
-
-	// Derived variables
-
-	DatabaseDriver        string
-	SessionCookieSameSite http.SameSite
 )
 
 func MustSetConstantsWithPrefix(files ...string) {
@@ -78,10 +73,10 @@ func MustSetConstantsWithoutPrefix(files ...string) {
 	MustSetConstants(false, files...)
 }
 
-func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warning
+func MustSetConstants(addPrefix bool, files ...string) {
 	MustLoadOptionalEnvFile(files...)
 
-	databaseDriver := MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
+	DatabaseDriver = MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
 	DataDir = MustGetString(prefix("DATA_DIR", addPrefix), "data")
 	LiveDataDir = MustGetString(prefix("LIVE_DATA_DIR", addPrefix), "live")
 	BackupDataDir = MustGetString(prefix("BACKUP_DATA_DIR", addPrefix), "backup")
@@ -111,7 +106,7 @@ func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warnin
 	SessionCookieName = MustGetString(prefix("SESSION_COOKIE_NAME", addPrefix), "session_token")
 	SessionCookieHttpOnly = MustGetBool(prefix("SESSION_COOKIE_HTTP_ONLY", addPrefix), true)
 	SessionCookieSecure = MustGetBool(prefix("SESSION_COOKIE_SECURE", addPrefix), false)
-	sessionCookieSameSite := MustGetString(prefix("SESSION_COOKIE_SAME_SITE", addPrefix), "lax")
+	SessionCookieSameSite = MustGetString(prefix("SESSION_COOKIE_SAME_SITE", addPrefix), "lax")
 	SessionTokenLength = MustGetInt(prefix("SESSION_TOKEN_LENGTH", addPrefix), 32)
 	SessionTokenCharset = MustGetString(prefix("SESSION_TOKEN_CHARSET", addPrefix), AlphaNumericCharset)
 	SessionLifetimeMin = MustGetInt(prefix("SESSION_LIFETIME_MIN", addPrefix), 60*24*7)
@@ -119,26 +114,6 @@ func MustSetConstants(addPrefix bool, files ...string) { // TODO: list of warnin
 	PreSessionLifetimeMin = MustGetInt(prefix("PRE_SESSION_LIFETIME_MIN", addPrefix), 15)
 	CSRFTokenLength = MustGetInt(prefix("CSRF_TOKEN_LENGTH", addPrefix), 32)
 	CSRFTokenCharset = MustGetString(prefix("CSRF_TOKEN_CHARSET", addPrefix), AlphaNumericCharset)
-
-	switch databaseDriver {
-	case DatabaseDriverPostgreSQL:
-		DatabaseDriver = DatabaseDriverPostgreSQL
-	case DatabaseDriverSQLite:
-		DatabaseDriver = DatabaseDriverSQLite
-	default:
-		DatabaseDriver = DatabaseDriverSQLite
-	}
-
-	switch sessionCookieSameSite {
-	case "lax":
-		SessionCookieSameSite = http.SameSiteLaxMode
-	case "strict":
-		SessionCookieSameSite = http.SameSiteStrictMode
-	case "none":
-		SessionCookieSameSite = http.SameSiteNoneMode
-	default:
-		SessionCookieSameSite = http.SameSiteNoneMode
-	}
 
 	ConstantsSet = true
 }
