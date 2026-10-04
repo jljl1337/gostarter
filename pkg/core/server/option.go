@@ -68,6 +68,17 @@ func WithCustomPasswordRegex(passwordRegex string) Option {
 	}
 }
 
+func WithCustomHashers(hasherList ...crypto.Hasher) Option {
+	return func(s *Server) error {
+		hashingManager, err := crypto.NewHashingManager(hasherList...)
+		if err != nil {
+			return fmt.Errorf("failed to create hashing manager: %w", err)
+		}
+
+		return WithCustomHashingManager(hashingManager)(s)
+	}
+}
+
 func WithCustomHashingManager(hashingManager *crypto.HashingManager) Option {
 	return func(s *Server) error {
 		s.hashingManager = hashingManager
