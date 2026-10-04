@@ -14,7 +14,7 @@ type UpdateUsernameByIDParams struct {
 
 func (s *EndpointService) UpdateUsernameByID(ctx context.Context, arg UpdateUsernameByIDParams) error {
 	// Validate new username
-	newUsernameValid := s.validationManager.ValidateUsername(arg.NewUsername)
+	newUsernameValid := s.usernameRegex.MatchString(arg.NewUsername)
 	if !newUsernameValid {
 		return NewServiceError(ErrCodeUnprocessable, "invalid new username format")
 	}
@@ -68,7 +68,7 @@ type UpdatePasswordByIDParams struct {
 }
 
 func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePasswordByIDParams) error {
-	newPasswordValid := s.validationManager.ValidatePassword(arg.NewPassword)
+	newPasswordValid := s.passwordRegex.MatchString(arg.NewPassword)
 	if !newPasswordValid {
 		return NewServiceError(ErrCodeUnprocessable, "invalid new password format")
 	}

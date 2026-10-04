@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
@@ -14,7 +15,6 @@ import (
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/role"
-	"github.com/jljl1337/gostarter/pkg/shared/validation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -54,15 +54,23 @@ func WithCustomIDGenerator(idGenerator func() string) Option {
 	}
 }
 
-func WithCustomUsernameRegex(usernameRegex string) Option {
+func WithCustomUsernameRegex(usernameRegex *regexp.Regexp) Option {
 	return func(s *Server) error {
+		if usernameRegex == nil {
+			return fmt.Errorf("username regex cannot be nil")
+		}
+
 		s.usernameRegex = usernameRegex
 		return nil
 	}
 }
 
-func WithCustomPasswordRegex(passwordRegex string) Option {
+func WithCustomPasswordRegex(passwordRegex *regexp.Regexp) Option {
 	return func(s *Server) error {
+		if passwordRegex == nil {
+			return fmt.Errorf("password regex cannot be nil")
+		}
+
 		s.passwordRegex = passwordRegex
 		return nil
 	}
@@ -213,17 +221,13 @@ func WithMiddleware(middlewareList ...transport.Middleware) Option {
 
 func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
-		validationManager, err := validation.NewValidationManager(s.usernameRegex, s.passwordRegex)
-		if err != nil {
-			return fmt.Errorf("failed to create validation manager: %w", err)
-		}
-
 		endpointService := service.NewEndpointService(service.EndpointServiceConfig{
-			DB:                s.db,
-			IDGenerator:       s.idGenerator,
-			HashingManager:    s.hashingManager,
-			ValidationManager: validationManager,
-			RoleManager:       s.roleManager,
+			DB:             s.db,
+			IDGenerator:    s.idGenerator,
+			HashingManager: s.hashingManager,
+			UsernameRegex:  s.usernameRegex,
+			PasswordRegex:  s.passwordRegex,
+			RoleManager:    s.roleManager,
 		})
 		endpointHandler := transport.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
 		handlerList = append([]transport.Handler{endpointHandler}, handlerList...)

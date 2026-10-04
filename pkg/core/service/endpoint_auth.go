@@ -17,12 +17,12 @@ type SignUpParams struct {
 }
 
 func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
-	usernameValid := s.validationManager.ValidateUsername(arg.Username)
+	usernameValid := s.usernameRegex.MatchString(arg.Username)
 	if !usernameValid {
 		return NewServiceError(ErrCodeUnprocessable, "invalid username format")
 	}
 
-	passwordValid := s.validationManager.ValidatePassword(arg.Password)
+	passwordValid := s.passwordRegex.MatchString(arg.Password)
 	if !passwordValid {
 		return NewServiceError(ErrCodeUnprocessable, "invalid password format")
 	}
