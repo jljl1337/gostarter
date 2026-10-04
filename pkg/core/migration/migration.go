@@ -20,8 +20,8 @@ func Migrate(db *sqlx.DB, runGostarterMigration bool, appMigrationFS embed.FS) e
 }
 
 /*
-Migrate applies or rolls back database migrations based on the current state
-of the database and the embedded migration files. The embedded migrations
+MigrateContext applies or rolls back database migrations based on the current
+state of the database and the embedded migration files. The embedded migrations
 are loaded from both the gostarter package and the appMigrationFS in the
 parameter.
 */
