@@ -27,13 +27,16 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 		return NewServiceError(ErrCodeUnprocessable, "invalid password format")
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	users, err := queries.GetAccountByUsername(ctx, arg.Username)
 	if err != nil {
@@ -78,7 +81,7 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 		return NewServiceErrorf(ErrCodeInternal, "failed to create user: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -88,13 +91,16 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 // GetPreSession creates a pre-session with no associated user.
 // It returns a non-empty session token and CSRF token.
 func (s *EndpointService) GetPreSession(ctx context.Context) (string, string, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	sessionID := s.NewID()
 	sessionToken := generator.NewToken(env.SessionTokenLength, env.SessionTokenCharset)
@@ -114,7 +120,7 @@ func (s *EndpointService) GetPreSession(ctx context.Context) (string, string, er
 		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to create pre-session: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -135,13 +141,16 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 		return "", "", NewServiceError(ErrCodeBadRequest, "username must be provided")
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	// Validate pre-session
 	sessions, err := queries.GetSessionByToken(ctx, arg.PreSessionToken)
@@ -260,7 +269,7 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to create session: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return "", "", NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -268,13 +277,16 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 }
 
 func (s *EndpointService) SignOut(ctx context.Context, sessionToken string) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	now := generator.NowISO8601()
 	err = queries.UpdateSessionByToken(ctx, repository.UpdateSessionByTokenParams{
@@ -286,7 +298,7 @@ func (s *EndpointService) SignOut(ctx context.Context, sessionToken string) erro
 		return NewServiceErrorf(ErrCodeInternal, "failed to sign out session: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -294,13 +306,16 @@ func (s *EndpointService) SignOut(ctx context.Context, sessionToken string) erro
 }
 
 func (s *EndpointService) SignOutAllSession(ctx context.Context, account repository.Account) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	now := generator.NowISO8601()
 	rows, err := queries.UpdateSessionByAccountID(ctx, repository.UpdateSessionByAccountIDParams{
@@ -316,7 +331,7 @@ func (s *EndpointService) SignOutAllSession(ctx context.Context, account reposit
 		return NewServiceError(ErrCodeInternal, "no sessions deleted")
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -324,7 +339,11 @@ func (s *EndpointService) SignOutAllSession(ctx context.Context, account reposit
 }
 
 func (s *EndpointService) CSRFToken(ctx context.Context, sessionToken string) (string, error) {
-	queries := repository.NewQueries(s.db)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
+	if err != nil {
+		return "", NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
 
 	sessions, err := queries.GetSessionByToken(ctx, sessionToken)
 

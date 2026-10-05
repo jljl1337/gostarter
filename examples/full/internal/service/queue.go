@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 
 	"github.com/jljl1337/gostarter/pkg/core/queue"
 	"github.com/jljl1337/gostarter/pkg/core/service"
@@ -16,10 +15,10 @@ import (
 )
 
 type QueueService struct {
-	db *sqlx.DB
+	db *sql.DB
 }
 
-func NewQueueService(db *sqlx.DB) *QueueService {
+func NewQueueService(db *sql.DB) *QueueService {
 	return &QueueService{
 		db: db,
 	}

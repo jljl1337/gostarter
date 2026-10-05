@@ -23,13 +23,16 @@ func (s *EndpointService) UpdateUsernameByID(ctx context.Context, arg UpdateUser
 		return NewServiceError(ErrCodeUnprocessable, "new username must be different from the old username")
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	// Check if new username is the same as the old one or already taken
 	accounts, err := queries.GetAccountByUsername(ctx, arg.NewUsername)
@@ -54,7 +57,7 @@ func (s *EndpointService) UpdateUsernameByID(ctx context.Context, arg UpdateUser
 		return NewServiceErrorf(ErrCodeInternal, "failed to update username: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -77,13 +80,16 @@ func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePass
 		return NewServiceError(ErrCodeUnprocessable, "new password must be different from the old password")
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	valid, err := s.hashingManager.ComparePassword(arg.Account.PasswordHash, arg.OldPassword)
 	if err != nil {
@@ -108,7 +114,7 @@ func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePass
 		return NewServiceErrorf(ErrCodeInternal, "failed to update password: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -117,20 +123,23 @@ func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePass
 
 func (s *EndpointService) DeleteAccountByID(ctx context.Context, account repository.Account) error {
 	// Delete user record
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return NewServiceErrorf(ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	err = queries.DeleteAccount(ctx, account.ID)
 	if err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to delete account: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 

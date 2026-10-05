@@ -2,8 +2,7 @@ package service
 
 import (
 	"context"
-
-	"github.com/jmoiron/sqlx"
+	"database/sql"
 
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
@@ -12,23 +11,26 @@ import (
 )
 
 type SchedulerService struct {
-	db *sqlx.DB
+	db *sql.DB
 }
 
-func NewSchedulerService(db *sqlx.DB) *SchedulerService {
+func NewSchedulerService(db *sql.DB) *SchedulerService {
 	return &SchedulerService{
 		db: db,
 	}
 }
 
 func (s *SchedulerService) DeleteExpiredNotes(ctx context.Context) (int64, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	deadline := generator.MinutesBeforeNowISO8601(1)
 	deleted, err := queries.DeleteNotesByUpdatedAt(ctx, deadline)

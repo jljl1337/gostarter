@@ -1,17 +1,24 @@
 package repository
 
 import (
-	"github.com/jmoiron/sqlx"
+	"context"
+	"database/sql"
+	"fmt"
 
 	"github.com/jljl1337/gostarter/pkg/core/repository"
 )
 
 type Queries struct {
-	repository.Queries
+	repository.Queryer
 }
 
-func NewQueries(db sqlx.ExtContext) *Queries {
-	return &Queries{
-		Queries: *repository.NewQueries(db),
+func NewQueries(ctx context.Context, db *sql.DB) (*Queries, error) {
+	queryer, err := repository.NewQueryerFromEnv(ctx, db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create queryer: %w", err)
 	}
+
+	return &Queries{
+		Queryer: *queryer,
+	}, nil
 }

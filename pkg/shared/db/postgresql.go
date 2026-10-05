@@ -1,31 +1,31 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
 
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
 
 /*
-NewDBFromEnv creates a new database connection based on the environment
-variables defined in the env package. It returns a pointer to sqlx.DB and an
-error if any occurs during the connection process.
+NewPostgreSQLDBFromEnv creates a new database connection based on the
+environment variables defined in the env package. It returns a pointer to
+sql.DB and an error if any occurs during the connection process.
 */
-func NewPostgreSQLDBFromEnv() (*sqlx.DB, error) {
+func NewPostgreSQLDBFromEnv() (*sql.DB, error) {
 	return NewPostgreSQLDB(env.PostgreSQLURL)
 }
 
 /*
 NewPostgreSQLDB creates a new PostgreSQL database connection using the
-provided URL. It returns a pointer to sqlx.DB and an error if any occurs
+provided URL. It returns a pointer to sql.DB and an error if any occurs
 during the connection process.
 */
-func NewPostgreSQLDB(url string) (*sqlx.DB, error) {
+func NewPostgreSQLDB(url string) (*sql.DB, error) {
 	if url == "" {
 		return nil, fmt.Errorf("PostgreSQL URL is missing")
 	}
-	return sqlx.Open("pgx", url)
+	return sql.Open("pgx", url)
 }

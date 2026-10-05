@@ -1,20 +1,21 @@
 package service
 
 import (
+	"database/sql"
+
 	"github.com/jljl1337/gostarter/pkg/core/queue"
 	"github.com/jljl1337/gostarter/pkg/shared/role"
-	"github.com/jmoiron/sqlx"
 )
 
 type EndpointServiceConfig struct {
-	DB           *sqlx.DB
+	DB           *sql.DB
 	IDGenerator  func() string
 	QueueManager *queue.QueueManager
 	RoleManager  *role.RoleManager
 }
 
 type EndpointService struct {
-	db           *sqlx.DB
+	db           *sql.DB
 	idGenerator  func() string
 	queueManager *queue.QueueManager
 	roleManager  *role.RoleManager

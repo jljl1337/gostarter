@@ -2,10 +2,9 @@ package queue
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sync"
-
-	"github.com/jmoiron/sqlx"
 
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
@@ -29,11 +28,11 @@ type laneState struct {
 	wake chan struct{}
 }
 
-func NewDefaultQueueManager(db *sqlx.DB, laneList ...Lane) *QueueManager {
+func NewDefaultQueueManager(db *sql.DB, laneList ...Lane) *QueueManager {
 	return NewQueueManagerWithSQLRepo(db, generator.NewULID, laneList...)
 }
 
-func NewQueueManagerWithSQLRepo(db *sqlx.DB, newID func() string, laneList ...Lane) *QueueManager {
+func NewQueueManagerWithSQLRepo(db *sql.DB, newID func() string, laneList ...Lane) *QueueManager {
 	repo := NewSQLTaskRepository(db)
 	return NewQueueManager(repo, newID, laneList...)
 }
@@ -58,6 +57,7 @@ func NewQueueManager(repo TaskRepository, newID func() string, laneList ...Lane)
 
 // Resume starts workers for any lane that already has pending/running tasks
 // left over from before a restart. Call once at startup.
+// TODO: add context
 func (m *QueueManager) Resume() error {
 	err := m.repo.ResetRunningTasks()
 	if err != nil {

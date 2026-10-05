@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"errors"
 	"fmt"
@@ -14,8 +15,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
 	"github.com/jljl1337/gostarter/pkg/core/migration"
@@ -37,7 +36,7 @@ const (
 )
 
 type Server struct {
-	db                      *sqlx.DB
+	db                      *sql.DB
 	runMigrations           bool
 	runGostarterMigrations  bool
 	appMigrationFS          embed.FS

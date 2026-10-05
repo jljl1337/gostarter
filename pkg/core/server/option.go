@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -15,12 +16,11 @@ import (
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/role"
-	"github.com/jmoiron/sqlx"
 )
 
 type Option func(*Server) error
 
-func WithDB(db *sqlx.DB) Option {
+func WithDB(db *sql.DB) Option {
 	return func(s *Server) error {
 		if db == nil {
 			return fmt.Errorf("database connection cannot be nil")
