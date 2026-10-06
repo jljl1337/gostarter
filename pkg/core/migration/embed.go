@@ -1,6 +1,8 @@
 package migration
 
-import "embed"
+import (
+	"embed"
+)
 
-//go:embed migration
-var migrationDir embed.FS
+//go:embed sql
+var migrationParentDir embed.FS

@@ -1,6 +1,9 @@
 package server
 
 import (
+	"fmt"
+	"io/fs"
+
 	"github.com/jljl1337/gostarter/pkg/core/queue"
 	"github.com/jljl1337/gostarter/pkg/core/server"
 	gsTransport "github.com/jljl1337/gostarter/pkg/core/transport"
@@ -11,8 +14,8 @@ import (
 
 	"github.com/jljl1337/gostarter/examples/full/internal/cron"
 	"github.com/jljl1337/gostarter/examples/full/internal/env"
+	"github.com/jljl1337/gostarter/examples/full/internal/migration"
 	"github.com/jljl1337/gostarter/examples/full/internal/service"
-	"github.com/jljl1337/gostarter/examples/full/internal/sql"
 	"github.com/jljl1337/gostarter/examples/full/internal/transport"
 	"github.com/jljl1337/gostarter/examples/full/web"
 )
@@ -22,12 +25,17 @@ func MustNewServer(envFile string) *server.Server {
 
 	err := log.SetCustomLoggerFromEnv()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to set custom logger: %w", err))
 	}
 
 	db, err := db.NewDBFromEnv()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to create db: %w", err))
+	}
+
+	migrationDir, err := fs.Sub(migration.MigrationParentDir, "sql")
+	if err != nil {
+		panic(fmt.Errorf("failed to get migration directory: %w", err))
 	}
 
 	schedulerService := service.NewSchedulerService(db)
@@ -51,7 +59,7 @@ func MustNewServer(envFile string) *server.Server {
 	s, err := server.NewServer(
 		server.WithDB(db),
 		server.WithGostarterMigration(),
-		server.WithAppMigrations(sql.MigrationDir),
+		server.WithAppMigrations(migrationDir),
 		server.WithCustomRoleManager(roleManager),
 		server.WithDefaultScheduler(job),
 		server.WithQueueManager(queueManager),

@@ -3,8 +3,9 @@ package migration
 import (
 	"context"
 	"database/sql"
-	"embed"
 	"fmt"
+	"io/fs"
+	"strings"
 
 	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
@@ -12,7 +13,7 @@ import (
 )
 
 // Migrate runs the [MigrateContext] with a background context.
-func Migrate(db *sql.DB, runGostarterMigration bool, appMigrationFS embed.FS) error {
+func Migrate(db *sql.DB, runGostarterMigration bool, appMigrationFS fs.FS) error {
 	return MigrateContext(context.Background(), db, runGostarterMigration, appMigrationFS)
 }
 
@@ -22,7 +23,7 @@ state of the database and the embedded migration files. The embedded migrations
 are loaded from both the gostarter package and the appMigrationFS in the
 parameter.
 */
-func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool, appMigrationFS embed.FS) error {
+func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool, appMigrationFS fs.FS) error {
 	queries, err := repository.NewQueriesFromEnv(ctx, db)
 	if err != nil {
 		return fmt.Errorf("failed to create queries: %w", err)
@@ -44,6 +45,11 @@ func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool,
 	now := generator.NowISO8601()
 
 	// Get the list of embedded migrations (gostarter and app migrations)
+	migrationDir, err := fs.Sub(migrationParentDir, "sql")
+	if err != nil {
+		return fmt.Errorf("failed to get migration directory: %w", err)
+	}
+
 	gostarterMigrationList, err := LoadMigrations(migrationDir, now)
 	if err != nil {
 		return fmt.Errorf("failed to load gostarter migrations: %w", err)
@@ -83,36 +89,35 @@ func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool,
 LoadMigrations loads migrations from the embedded filesystem and returns a
 slice of Migration structs.
 */
-func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
-	// Get all migrations from the embedded filesystem
-	dirEntryList, err := fs.ReadDir("migration")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read migration directory: %w", err)
-	}
-
+func LoadMigrations(migrationFS fs.FS, now string) ([]repository.Migration, error) {
 	migrationMap := make(map[string]repository.Migration)
 	migrationList := make([]repository.Migration, 0)
 
-	for _, dirEntry := range dirEntryList {
+	// Get all migrations from the embedded filesystem
+	err := fs.WalkDir(migrationFS, ".", func(path string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("failed to walk migration directory: %w", err)
+		}
+
 		// Skip directories
 		if dirEntry.IsDir() {
 			log.Warnf("Skipping directory in migrations: %s", dirEntry.Name())
-			continue
+			return nil
 		}
 
 		// Get the migration statement
 		filename := dirEntry.Name()
 
-		// Remove .up.sql or .down.sql suffix to get the migration ID
-		if len(filename) < 7 || (filename[len(filename)-7:] != ".up.sql" && filename[len(filename)-9:] != ".down.sql") {
+		// Skip files that don't match the expected migration filename pattern
+		if !strings.HasSuffix(filename, ".up.sql") && !strings.HasSuffix(filename, ".down.sql") {
 			log.Warnf("Skipping file with invalid migration filename: %s", filename)
-			continue
+			return nil
 		}
 
 		// Read the migration file
-		statementBytes, err := fs.ReadFile("migration/" + filename)
+		statementBytes, err := fs.ReadFile(migrationFS, path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read migration file %s: %w", filename, err)
+			return fmt.Errorf("failed to read migration file %s: %w", filename, err)
 		}
 		statement := string(statementBytes)
 
@@ -120,11 +125,12 @@ func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
 		var migrationID string
 		isUp := false
 
-		if filename[len(filename)-7:] == ".up.sql" {
-			migrationID = filename[:len(filename)-7]
+		if before, ok := strings.CutSuffix(filename, ".up.sql"); ok {
+			migrationID = before
 			isUp = true
-		} else if filename[len(filename)-9:] == ".down.sql" {
-			migrationID = filename[:len(filename)-9]
+		} else {
+			before, _ := strings.CutSuffix(filename, ".down.sql")
+			migrationID = before
 		}
 
 		// Update or create the migration entry
@@ -146,6 +152,11 @@ func LoadMigrations(fs embed.FS, now string) ([]repository.Migration, error) {
 		if exists {
 			migrationList = append(migrationList, migration)
 		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to load migrations: %w", err)
 	}
 
 	return migrationList, nil

@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"database/sql"
-	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -39,7 +39,7 @@ type Server struct {
 	db                      *sql.DB
 	runMigrations           bool
 	runGostarterMigrations  bool
-	appMigrationFS          embed.FS
+	appMigrationFS          fs.FS
 	scheduler               *cron.Scheduler
 	queueManager            *queue.QueueManager
 	apiMux                  *http.ServeMux

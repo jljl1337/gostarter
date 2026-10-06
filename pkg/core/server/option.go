@@ -2,7 +2,6 @@ package server
 
 import (
 	"database/sql"
-	"embed"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -39,7 +38,7 @@ func WithGostarterMigration() Option {
 	}
 }
 
-func WithAppMigrations(appMigrationFS embed.FS) Option {
+func WithAppMigrations(appMigrationFS fs.FS) Option {
 	return func(s *Server) error {
 		s.runMigrations = true
 		s.appMigrationFS = appMigrationFS
