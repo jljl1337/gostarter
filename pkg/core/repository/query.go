@@ -95,7 +95,6 @@ func sqlxDBFromDB(db *sql.DB, driverName string) *sqlx.DB {
 // Close closes the database connection. Make sure there is no active
 // transaction before calling this method.
 func (q *Queryer) Close() {
-	// golangci-lint: disable=errcheck
 	q.conn.Close()
 }
 
@@ -146,8 +145,7 @@ func (q *Queryer) RollbackTx(ctx context.Context) {
 		return
 	}
 
-	// golangci-lint: disable=errcheck
-	q.ExecContext(ctx, "ROLLBACK;")
+	q.ExecContext(ctx, "ROLLBACK;") // nolint:errcheck
 
 	q.transactionActive = false
 }
