@@ -23,13 +23,16 @@ are loaded from both the gostarter package and the appMigrationFS in the
 parameter.
 */
 func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool, appMigrationFS embed.FS) error {
-	tx, err := db.BeginTx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, db)
 	if err != nil {
+		return fmt.Errorf("failed to create queries: %w", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueriesFromEnv(tx)
+	defer queries.RollbackTx(ctx)
 
 	// Create the migrations table if it doesn't exist
 	err = queries.CreateMigrationTable(ctx)
@@ -69,7 +72,7 @@ func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool,
 	}
 
 	// Commit the transaction
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
