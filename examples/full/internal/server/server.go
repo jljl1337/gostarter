@@ -56,6 +56,11 @@ func MustNewServer(envFile string) *server.Server {
 	})
 	handler := transport.NewEndpointHandler(service, responseHandler)
 
+	siteDir, err := fs.Sub(web.SiteParentDir, "site")
+	if err != nil {
+		panic(fmt.Errorf("failed to get site directory: %w", err))
+	}
+
 	s, err := server.NewServer(
 		server.WithDB(db),
 		server.WithGostarterMigration(),
@@ -63,7 +68,7 @@ func MustNewServer(envFile string) *server.Server {
 		server.WithCustomRoleManager(roleManager),
 		server.WithDefaultScheduler(job),
 		server.WithQueueManager(queueManager),
-		server.WithStaticSite("/", web.SiteDir, "site"),
+		server.WithStaticSite("/", siteDir),
 		server.WithDefaultMiddleware(),
 		server.WithDefaultApiHandler(handler),
 		server.WithHttpServer(),

@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"fmt"
 	"io/fs"
 	"net/http"
 	"strings"
@@ -12,12 +11,8 @@ type WebHandler struct {
 	siteFs fs.FS
 }
 
-func NewWebHandler(path string, siteFs fs.FS, subPath string) (*WebHandler, error) {
-	subFs, err := fs.Sub(siteFs, subPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create sub filesystem: %w", err)
-	}
-	return &WebHandler{path: path, siteFs: subFs}, nil
+func NewWebHandler(path string, siteFs fs.FS) *WebHandler {
+	return &WebHandler{path: path, siteFs: siteFs}
 }
 
 func (h *WebHandler) RegisterRoutes(mux *http.ServeMux) {
