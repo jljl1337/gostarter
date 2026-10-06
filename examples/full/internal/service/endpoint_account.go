@@ -10,7 +10,11 @@ import (
 )
 
 func (s *EndpointService) GetAccounts(ctx context.Context) ([]repository.Account, error) {
-	queries := repository.NewQueries(s.db)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
+	if err != nil {
+		return nil, service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
 
 	accounts, err := queries.GetAccounts(ctx)
 	if err != nil {
@@ -31,13 +35,16 @@ func (s *EndpointService) UpdateAccountRoleByID(ctx context.Context, arg UpdateA
 		return service.NewServiceErrorf(service.ErrCodeUnprocessable, "unknown role %s", arg.NewRole)
 	}
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	account, err := s.getManagedAccountByID(ctx, queries, arg.Actor, arg.AccountID)
 	if err != nil {
@@ -57,7 +64,7 @@ func (s *EndpointService) UpdateAccountRoleByID(ctx context.Context, arg UpdateA
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update account role: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -65,13 +72,16 @@ func (s *EndpointService) UpdateAccountRoleByID(ctx context.Context, arg UpdateA
 }
 
 func (s *EndpointService) DeleteAccountByID(ctx context.Context, actor repository.Account, accountID string) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	// Sessions and notes of the account are removed by the foreign keys
 	_, err = s.getManagedAccountByID(ctx, queries, actor, accountID)
@@ -84,7 +94,7 @@ func (s *EndpointService) DeleteAccountByID(ctx context.Context, actor repositor
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete account: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 

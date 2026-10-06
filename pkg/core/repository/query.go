@@ -85,6 +85,10 @@ func sqlxDBFromDB(db *sql.DB, driverName string) *sqlx.DB {
 		sqlxDriverName = "sqlite3"
 	}
 
+	if sqlxDriverName == "postgresql" {
+		sqlxDriverName = "postgres"
+	}
+
 	return sqlx.NewDb(db, sqlxDriverName)
 }
 

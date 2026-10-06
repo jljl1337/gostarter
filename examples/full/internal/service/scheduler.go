@@ -38,7 +38,7 @@ func (s *SchedulerService) DeleteExpiredNotes(ctx context.Context) (int64, error
 		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete expired notes: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 

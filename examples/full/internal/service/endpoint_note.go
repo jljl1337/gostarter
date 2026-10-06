@@ -11,15 +11,18 @@ import (
 )
 
 func (s *EndpointService) CreateNote(ctx context.Context, accountID string) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
+	defer queries.RollbackTx(ctx)
 
 	now := generator.NowISO8601()
-
-	queries := repository.NewQueries(tx)
 
 	note := repository.Note{
 		ID:         s.idGenerator(),
@@ -35,7 +38,7 @@ func (s *EndpointService) CreateNote(ctx context.Context, accountID string) erro
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create note: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -47,7 +50,11 @@ func (s *EndpointService) CreateNote(ctx context.Context, accountID string) erro
 }
 
 func (s *EndpointService) GetNotesByAccountID(ctx context.Context, accountID string) ([]repository.Note, error) {
-	queries := repository.NewQueries(s.db)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
+	if err != nil {
+		return nil, service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
 
 	notes, err := queries.GetNotesByAccountID(ctx, accountID)
 	if err != nil {
@@ -58,15 +65,18 @@ func (s *EndpointService) GetNotesByAccountID(ctx context.Context, accountID str
 }
 
 func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID string, noteID string, newBody string) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
+	defer queries.RollbackTx(ctx)
 
 	now := generator.NowISO8601()
-
-	queries := repository.NewQueries(tx)
 
 	notes, err := queries.GetNoteByID(ctx, noteID)
 	if err != nil {
@@ -97,7 +107,7 @@ func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID stri
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note by ID: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 
@@ -109,13 +119,16 @@ func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID stri
 }
 
 func (s *EndpointService) DeleteNoteByID(ctx context.Context, accountID string, noteID string) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, err := repository.NewQueriesFromEnv(ctx, s.db)
 	if err != nil {
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries: %v", err)
+	}
+	defer queries.Close()
+
+	if err = queries.BeginTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer queries.RollbackTx(ctx)
 
 	notes, err := queries.GetNoteByID(ctx, noteID)
 	if err != nil {
@@ -140,7 +153,7 @@ func (s *EndpointService) DeleteNoteByID(ctx context.Context, accountID string, 
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete note by ID: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := queries.CommitTx(ctx); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
 	}
 

@@ -9,16 +9,16 @@ import (
 )
 
 type Queries struct {
-	repository.Queryer
+	repository.Queries
 }
 
-func NewQueries(ctx context.Context, db *sql.DB) (*Queries, error) {
-	queryer, err := repository.NewQueryerFromEnv(ctx, db)
+func NewQueriesFromEnv(ctx context.Context, db *sql.DB) (*Queries, error) {
+	queries, err := repository.NewQueriesFromEnv(ctx, db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create queryer: %w", err)
 	}
 
 	return &Queries{
-		Queryer: *queryer,
+		Queries: *queries,
 	}, nil
 }

@@ -2,5 +2,5 @@ package migration
 
 import "embed"
 
-//go:embed sql
+//go:embed migration
 var migrationDir embed.FS
