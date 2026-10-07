@@ -77,15 +77,19 @@ func NewQueryer(ctx context.Context, db *sql.DB, driverName string) (*Queryer, e
 	}, nil
 }
 
+// sqlxDBFromDB creates a new [sqlx.DB] from the provided [sql.DB] and driver
+// name. It returns a pointer to a [sqlx.DB].
+//
+// It maps the driver name to the corresponding actual driver name used to open
+// the database connection.
 func sqlxDBFromDB(db *sql.DB, driverName string) *sqlx.DB {
 	sqlxDriverName := driverName
+
 	if sqlxDriverName == "turso" {
-		// Swapping the driver name to "sqlite3" for sqlx, as sqlx does not
-		// recognize "turso" as a valid driver name.
 		sqlxDriverName = "sqlite3"
 	}
 
-	if sqlxDriverName == "postgresql" {
+	if sqlxDriverName == env.DatabaseDriverPostgreSQL {
 		sqlxDriverName = "postgres"
 	}
 
