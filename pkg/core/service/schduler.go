@@ -19,8 +19,8 @@ func NewSchedulerService(db *sql.DB) *SchedulerService {
 	}
 }
 
-func (s *SchedulerService) BackupSQLiteDBFromEnv(ctx context.Context) error {
-	return db.BackupSQLiteDBFromEnv(s.db)
+func (s *SchedulerService) BackupTursoDBFromEnv(ctx context.Context) error {
+	return db.BackupTursoDBFromEnv(ctx, s.db)
 }
 
 func (s *SchedulerService) CleanupExpiredSessions(ctx context.Context) (int64, error) {

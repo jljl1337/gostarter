@@ -46,7 +46,7 @@ if [ -d "data/test" ]; then
     rm -r "data/test"
 fi
 
-mkdir -p "data/test/sqlite"
+mkdir -p "data/test/turso"
 mkdir -p "data/test/pg"
 
 echo "Building the binary..."
@@ -57,10 +57,10 @@ docker compose -f test/pg.compose.yml up -d --wait
 
 echo "Running the application..."
 
-./full.out -env=test/sqlite.env > /dev/null 2>&1 &
-sqlite_pid=$!
-app_pids+=($sqlite_pid)
-echo "Started the application with SQLite PID: $sqlite_pid"
+./full.out -env=test/turso.env > /dev/null 2>&1 &
+turso_pid=$!
+app_pids+=($turso_pid)
+echo "Started the application with Turso PID: $turso_pid"
 
 ./full.out -env=test/pg.env > /dev/null 2>&1 &
 pg_pid=$!

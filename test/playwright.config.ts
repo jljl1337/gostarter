@@ -28,7 +28,7 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'sqlite',
+      name: 'turso',
       use: { baseURL: 'http://localhost:3000' },
     },
 

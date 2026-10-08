@@ -17,8 +17,8 @@ func NewDBFromEnv() (*sql.DB, error) {
 	case env.DatabaseDriverPostgreSQL:
 		return NewPostgreSQLDBFromEnv()
 
-	case env.DatabaseDriverSQLite:
-		return NewSQLiteDBFromEnv()
+	case env.DatabaseDriverTurso:
+		return NewTursoDBFromEnv()
 
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", env.DatabaseDriver)

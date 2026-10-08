@@ -30,7 +30,7 @@ func MigrateContext(ctx context.Context, db *sql.DB, runGostarterMigration bool,
 	}
 	defer queries.Close()
 
-	if err = queries.BeginTx(ctx); err != nil {
+	if err = queries.ManualBeginTx(ctx, false); err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer queries.RollbackTx(ctx)

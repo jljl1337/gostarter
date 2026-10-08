@@ -60,16 +60,16 @@ func (s *Scheduler) Shutdown(ctx context.Context) error {
 func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Job {
 	var jobList []Job
 
-	// Database backup job (only for SQLite)
-	if env.DatabaseDriver == env.DatabaseDriverSQLite {
-		if env.SQLiteBackupEnabled {
-			job := SQLiteBackupJob(schedulerService)
+	// Database backup job (only for Turso)
+	if env.DatabaseDriver == env.DatabaseDriverTurso {
+		if env.TursoBackupEnabled {
+			job := TursoBackupJob(schedulerService)
 			jobList = append(jobList, job)
 		} else {
-			log.Warn("SQLite Database backup cron job not scheduled")
+			log.Warn("Database backup cron job is available but not scheduled")
 		}
 	} else {
-		log.Info("Database backup is only available for SQLite, skip adding cron job")
+		log.Info("Database backup is only available for Turso, skip adding cron job")
 	}
 
 	// Session cleanup job
@@ -82,16 +82,16 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 	return jobList
 }
 
-func SQLiteBackupJob(schedulerService *service.SchedulerService) Job {
+func TursoBackupJob(schedulerService *service.SchedulerService) Job {
 	return Job{
-		CronSchedule: env.SQLiteBackupCronSchedule,
+		CronSchedule: env.TursoBackupCronSchedule,
 		WithSeconds:  false,
 		Task: func(ctx context.Context) {
 			log.Info("Starting database backup")
 
 			start := time.Now()
 
-			if err := schedulerService.BackupSQLiteDBFromEnv(ctx); err != nil {
+			if err := schedulerService.BackupTursoDBFromEnv(ctx); err != nil {
 				log.Errorf("Failed to backup database: %v", err)
 				return
 			}

@@ -6,7 +6,7 @@
 - Configurable, either full on setup, or table only, or even build from scratch.
 - Infrastructure independent, from one binary for each sidecar to one binary for
   the entire backend.
-- Compatible with SQLite and PostgreSQL.
+- Compatible with Turso and PostgreSQL.
 
 ## What is gostarter?
 

@@ -1,7 +1,7 @@
 package env
 
 const (
-	DatabaseDriverSQLite             = "sqlite"
+	DatabaseDriverTurso              = "turso"
 	DatabaseDriverPostgreSQL         = "postgresql"
 	PasswordHashingAlgorithmArgon2id = "argon2id"
 	PasswordHashingAlgorithmBcrypt   = "bcrypt"
@@ -25,44 +25,49 @@ var (
 
 	// Plain variables from environment variables
 
-	DatabaseDriver              string
-	DataDir                     string
-	LiveDataDir                 string
-	BackupDataDir               string
-	SQLiteDir                   string
-	SQLiteLiveFileName          string
-	SQLiteDbBusyTimeout         string
-	SQLiteBackupEnabled         bool
-	SQLiteBackupCronSchedule    string
-	SQLiteBackupFileName        string
-	PostgreSQLURL               string
-	SessionCleanupEnabled       bool
-	SessionCleanupCronSchedule  string
-	LogLevel                    int
-	LogHealthCheck              bool
-	Port                        string
-	SocketPath                  string
-	SocketPerm                  string
-	GracefulShutdownTimeoutSec  int
-	CORSOrigins                 string
-	PasswordHashingAlgorithm    string
-	PasswordArgon2idMemory      int
-	PasswordArgon2idIterations  int
-	PasswordArgon2idParallelism int
-	PasswordArgon2idSaltLength  int
-	PasswordArgon2idKeyLength   int
-	PasswordBcryptCost          int
-	SessionCookieName           string
-	SessionCookieHttpOnly       bool
-	SessionCookieSecure         bool
-	SessionCookieSameSite       string
-	SessionTokenLength          int
-	SessionTokenCharset         string
-	SessionLifetimeMin          int
-	SessionRefreshThresholdMin  int
-	PreSessionLifetimeMin       int
-	CSRFTokenLength             int
-	CSRFTokenCharset            string
+	DatabaseDriver               string
+	DataDir                      string
+	LiveDataDir                  string
+	BackupDataDir                string
+	TursoDir                     string
+	TursoLiveFileName            string
+	TursoJournalMode             string
+	TursoForeignKeys             bool
+	TursoRequireWhere            bool
+	TursoBusyTimeout             int
+	TursoMVCCCheckpointThreshold int
+	TursoMVCCGCThreshold         int
+	TursoBackupEnabled           bool
+	TursoBackupCronSchedule      string
+	TursoBackupFileName          string
+	PostgreSQLURL                string
+	SessionCleanupEnabled        bool
+	SessionCleanupCronSchedule   string
+	LogLevel                     int
+	LogHealthCheck               bool
+	Port                         string
+	SocketPath                   string
+	SocketPerm                   string
+	GracefulShutdownTimeoutSec   int
+	CORSOrigins                  string
+	PasswordHashingAlgorithm     string
+	PasswordArgon2idMemory       int
+	PasswordArgon2idIterations   int
+	PasswordArgon2idParallelism  int
+	PasswordArgon2idSaltLength   int
+	PasswordArgon2idKeyLength    int
+	PasswordBcryptCost           int
+	SessionCookieName            string
+	SessionCookieHttpOnly        bool
+	SessionCookieSecure          bool
+	SessionCookieSameSite        string
+	SessionTokenLength           int
+	SessionTokenCharset          string
+	SessionLifetimeMin           int
+	SessionRefreshThresholdMin   int
+	PreSessionLifetimeMin        int
+	CSRFTokenLength              int
+	CSRFTokenCharset             string
 )
 
 func MustSetConstantsWithPrefix(files ...string) {
@@ -76,16 +81,21 @@ func MustSetConstantsWithoutPrefix(files ...string) {
 func MustSetConstants(addPrefix bool, files ...string) {
 	MustLoadOptionalEnvFile(files...)
 
-	DatabaseDriver = MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
+	DatabaseDriver = MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverTurso)
 	DataDir = MustGetString(prefix("DATA_DIR", addPrefix), "data")
 	LiveDataDir = MustGetString(prefix("LIVE_DATA_DIR", addPrefix), "live")
 	BackupDataDir = MustGetString(prefix("BACKUP_DATA_DIR", addPrefix), "backup")
-	SQLiteDir = MustGetString(prefix("SQLITE_DIR", addPrefix), "db")
-	SQLiteLiveFileName = MustGetString(prefix("SQLITE_LIVE_FILE_NAME", addPrefix), "live.db")
-	SQLiteDbBusyTimeout = MustGetString(prefix("SQLITE_BUSY_TIMEOUT", addPrefix), "30000")
-	SQLiteBackupEnabled = MustGetBool(prefix("SQLITE_BACKUP_ENABLED", addPrefix), true)
-	SQLiteBackupCronSchedule = MustGetString(prefix("SQLITE_BACKUP_CRON_SCHEDULE", addPrefix), "0 0 * * *")
-	SQLiteBackupFileName = MustGetString(prefix("SQLITE_BACKUP_FILE_NAME", addPrefix), "backup.db")
+	TursoDir = MustGetString(prefix("TURSO_DIR", addPrefix), "db")
+	TursoLiveFileName = MustGetString(prefix("TURSO_LIVE_FILE_NAME", addPrefix), "live.db")
+	TursoJournalMode = MustGetString(prefix("TURSO_JOURNAL_MODE", addPrefix), "mvcc")
+	TursoForeignKeys = MustGetBool(prefix("TURSO_FOREIGN_KEYS", addPrefix), true)
+	TursoRequireWhere = MustGetBool(prefix("TURSO_REQUIRE_WHERE", addPrefix), true)
+	TursoBusyTimeout = MustGetInt(prefix("TURSO_BUSY_TIMEOUT", addPrefix), 30000)
+	TursoMVCCCheckpointThreshold = MustGetInt(prefix("TURSO_MVCC_CHECKPOINT_THRESHOLD", addPrefix), 1000)
+	TursoMVCCGCThreshold = MustGetInt(prefix("TURSO_MVCC_GC_THRESHOLD", addPrefix), 1000)
+	TursoBackupEnabled = MustGetBool(prefix("TURSO_BACKUP_ENABLED", addPrefix), true)
+	TursoBackupCronSchedule = MustGetString(prefix("TURSO_BACKUP_CRON_SCHEDULE", addPrefix), "0 0 * * *")
+	TursoBackupFileName = MustGetString(prefix("TURSO_BACKUP_FILE_NAME", addPrefix), "backup.db")
 	PostgreSQLURL = MustGetString(prefix("POSTGRESQL_URL", addPrefix), "")
 	SessionCleanupEnabled = MustGetBool(prefix("SESSION_CLEANUP_ENABLED", addPrefix), true)
 	SessionCleanupCronSchedule = MustGetString(prefix("SESSION_CLEANUP_CRON_SCHEDULE", addPrefix), "0 0 * * 0")

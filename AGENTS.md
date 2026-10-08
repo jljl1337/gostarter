@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Go library (`pkg/`) for building monolith/sidecar backends, plus a full reference app (`examples/full/`).
-Single module `github.com/jljl1337/gostarter`, Go 1.25. Dual-dialect: **SQLite and PostgreSQL**.
+Single module `github.com/jljl1337/gostarter`, Go 1.25. Dual-dialect: **Turso and PostgreSQL**.
 
 ## Commands
 
@@ -22,7 +22,7 @@ bash script/test.sh       # THE ONLY test suite (see below)
 
 `bash script/test.sh` **must be run from the repo root** (relative paths). It: builds
 `full.out` from `examples/full/cmd/main.go`, starts Postgres via `test/pg.compose.yml`, launches the
-app twice (`test/sqlite.env` → :3000, `test/pg.env` → :3001), runs `pnpm exec playwright test` in
+app twice (`test/turso.env` → :3000, `test/pg.env` → :3001), runs `pnpm exec playwright test` in
 `test/`, then tears down processes/compose and `rm -rf data/test`.
 
 Prereqs: `docker` and pnpm (`pnpm install --frozen-lockfile` in `test/`, as CI does).
@@ -31,8 +31,8 @@ Focused run — start the server yourself first:
 
 ```bash
 go build -o full.out examples/full/cmd/main.go
-./full.out -env=test/sqlite.env &
-cd test && pnpm exec playwright test --project=sqlite   # or --project=postgres
+./full.out -env=test/turso.env &
+cd test && pnpm exec playwright test --project=turso   # or --project=postgres
 ```
 
 Gotcha: `reporter: 'html'` defaults to `open: 'on-failure'`, so a **failing** local run makes the
@@ -98,7 +98,7 @@ HTTP routing:
   (used by `examples/full`) reads bare `PORT`. All env files here (`test/*.env`, root `.env`) are unprefixed.
 - Every key also supports `<KEY>_FILE` to read the value from a file path (Docker secrets pattern).
 - `LOG_LEVEL` is a raw `log/slog` level int (`-10` = debug; the test env files set `-10` to stay quiet).
-- Root `.env` is gitignored; defaults must work without it (`DATA_DIR=data`, driver sqlite, port 3000).
+- Root `.env` is gitignored; defaults must work without it (`DATA_DIR=data`, driver turso, port 3000).
 
 ## Conventions
 

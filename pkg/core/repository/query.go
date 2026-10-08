@@ -54,7 +54,7 @@ type Queryer struct {
 // Always call [Queryer.Close] to close the connection when you are done using
 // it.
 func NewQueryerFromEnv(ctx context.Context, db *sql.DB) (*Queryer, error) {
-	return NewQueryer(ctx, db, env.DatabaseDriver)
+	return NewQueryer(ctx, db, env.DatabaseDriver, env.TursoJournalMode)
 }
 
 // NewQueryer creates a new [Queryer] instance with the provided [sql.DB]
@@ -62,17 +62,19 @@ func NewQueryerFromEnv(ctx context.Context, db *sql.DB) (*Queryer, error) {
 //
 // Always call [Queryer.Close] to close the connection when you are done using
 // it.
-func NewQueryer(ctx context.Context, db *sql.DB, driverName string) (*Queryer, error) {
+func NewQueryer(ctx context.Context, db *sql.DB, driverName string, journalMode string) (*Queryer, error) {
 	sqlxDB := sqlxDBFromDB(db, driverName)
 	sqlxConn, err := sqlxDB.Connx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connection: %w", err)
 	}
 
+	useBeginConcurrent := driverName == env.DatabaseDriverTurso && journalMode == "mvcc"
+
 	return &Queryer{
 		conn:              sqlxConn,
 		driverName:        driverName,
-		useBeginConurrent: false,
+		useBeginConurrent: useBeginConcurrent,
 		transactionActive: false,
 	}, nil
 }
@@ -85,7 +87,7 @@ func NewQueryer(ctx context.Context, db *sql.DB, driverName string) (*Queryer, e
 func sqlxDBFromDB(db *sql.DB, driverName string) *sqlx.DB {
 	sqlxDriverName := driverName
 
-	if sqlxDriverName == "turso" {
+	if sqlxDriverName == env.DatabaseDriverTurso {
 		sqlxDriverName = "sqlite3"
 	}
 
@@ -104,13 +106,23 @@ func (q *Queryer) Close() {
 
 // BeginTx starts a new transaction. It returns an error if a transaction is
 // already active.
+//
+// If the database driver is Turso and the journal mode is MVCC, it will use
+// `BEGIN CONCURRENT;` to start the transaction. Otherwise, it will use
+// `BEGIN;`.
 func (q *Queryer) BeginTx(ctx context.Context) error {
+	return q.ManualBeginTx(ctx, q.useBeginConurrent)
+}
+
+// ManualBeginTx starts a new transaction. It returns an error if a transaction
+// is already active.
+func (q *Queryer) ManualBeginTx(ctx context.Context, isConcurrent bool) error {
 	if q.transactionActive {
 		return fmt.Errorf("transaction already active")
 	}
 
 	beginQuery := "BEGIN;"
-	if q.useBeginConurrent {
+	if isConcurrent {
 		beginQuery = "BEGIN CONCURRENT;"
 	}
 
