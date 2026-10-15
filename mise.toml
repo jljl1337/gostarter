@@ -1,0 +1,71 @@
+[tools]
+go = "1.27"
+"go:golang.org/x/tools/gopls" = "latest"
+golangci-lint = "latest"
+pnpm = "latest"
+
+[settings]
+lockfile = true
+
+[tasks.setup]
+description = "Setup the project"
+run = [
+  { tasks = ["go_download", "pnpm_install"] },
+]
+
+[tasks.go_download]
+description = "Run go mod download"
+run = [
+  "go mod download",
+]
+
+[tasks.pnpm_install]
+description = "Run pnpm install for e2e tests"
+dir = "test"
+run = [
+  "pnpm install",
+]
+
+[tasks.tidy]
+description = "Run go mod tidy"
+run = [
+  "go mod tidy",
+]
+
+[tasks.lint]
+description = "Run golangci-lint on the project"
+run = [
+  "golangci-lint run ./...",
+]
+
+[tasks.build_all]
+description = "Build all binaries"
+run = [
+  { tasks = ["build_full"] }
+]
+
+[tasks.build_full]
+description = "Build the full example binary"
+run = [
+  "go build -o full.out ./examples/full/cmd/main.go",
+]
+
+[tasks.test_all]
+description = "Run all tests"
+run = [
+  { tasks = ["e2e_test_full"] },
+]
+
+[tasks.e2e_test_full]
+description = "Run tests for the full example"
+depends = ["build_full"]
+run = [
+  "./script/test.sh",
+]
+
+[tasks.check]
+description = "Run all checks"
+run = [
+  { tasks = ["lint"] },
+  { tasks = ["test_all"] },
+]

@@ -32,10 +32,6 @@ cleanup() {
     echo "Shutting down the database compose..."
 	docker compose -f "test/pg.compose.yml" down
 
-    if [ -d "data/test" ]; then
-        rm -r "data/test"
-    fi
-
     echo "Cleanup complete. Exiting with code $exit_code."
 	exit "$exit_code"
 }
@@ -49,20 +45,17 @@ fi
 mkdir -p "data/test/sqlite"
 mkdir -p "data/test/pg"
 
-echo "Building the binary..."
-go build -o full.out examples/full/cmd/main.go
-
 echo "Running the database compose..."
 docker compose -f test/pg.compose.yml up -d --wait
 
 echo "Running the application..."
 
-./full.out -env=test/sqlite.env > /dev/null 2>&1 &
+./full.out -env=test/sqlite.env > data/test/sqlite/app.log 2>&1 &
 sqlite_pid=$!
 app_pids+=($sqlite_pid)
 echo "Started the application with SQLite PID: $sqlite_pid"
 
-./full.out -env=test/pg.env > /dev/null 2>&1 &
+./full.out -env=test/pg.env > data/test/pg/app.log 2>&1 &
 pg_pid=$!
 app_pids+=($pg_pid)
 echo "Started the application with PostgreSQL PID: $pg_pid"
