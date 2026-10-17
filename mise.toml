@@ -50,6 +50,13 @@ run = [
   "go build -o full.out ./examples/full/cmd/main.go",
 ]
 
+[tasks.run_full]
+description = "Run the full example binary"
+depends = ["build_full"]
+run = [
+  "./full.out -env=test/sqlite.env",
+]
+
 [tasks.test_all]
 description = "Run all tests"
 run = [

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"embed"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -39,7 +38,7 @@ func WithGostarterMigration() Option {
 	}
 }
 
-func WithAppMigrations(appMigrationFS embed.FS) Option {
+func WithAppMigrations(appMigrationFS fs.FS) Option {
 	return func(s *Server) error {
 		s.runMigrations = true
 		s.appMigrationFS = appMigrationFS
@@ -192,12 +191,9 @@ func WithGracefulShutdownTimeout(timeout time.Duration) Option {
 	}
 }
 
-func WithStaticSite(path string, siteFs fs.FS, subPath string) Option {
+func WithStaticSite(path string, siteFs fs.FS) Option {
 	return func(s *Server) error {
-		webHandler, err := transport.NewWebHandler(path, siteFs, subPath)
-		if err != nil {
-			return fmt.Errorf("failed to create web handler: %w", err)
-		}
+		webHandler := transport.NewWebHandler(path, siteFs)
 		webHandler.RegisterRoutes(s.mux)
 
 		return nil
