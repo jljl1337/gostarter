@@ -38,30 +38,30 @@ func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Conte
 	}
 
 	if len(sessions) > 1 {
-		return nil, NewServiceError(ErrCodeInternal, "multiple sessions found with the same token")
+		return nil, NewServiceErrorf(ErrCodeInternal, "multiple sessions found with the same token")
 	}
 
 	if len(sessions) < 1 {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	session := sessions[0]
 
 	// Return unauthorized if the session is a pre session
 	if session.AccountID == nil {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	// CSRF token does not match
 	if CSRFToken != "" && session.CsrfToken != CSRFToken {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	// Session expired
 	now := time.Now()
 	nowISO8601 := format.TimeToISO8601(now)
 	if session.ExpiresAt < nowISO8601 {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	// Only refresh session if remaining lifetime is below threshold

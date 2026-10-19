@@ -16,11 +16,11 @@ func (s *EndpointService) UpdateUsernameByID(ctx context.Context, arg UpdateUser
 	// Validate new username
 	newUsernameValid := s.usernameRegex.MatchString(arg.NewUsername)
 	if !newUsernameValid {
-		return NewServiceError(ErrCodeUnprocessable, "invalid new username format")
+		return NewServiceErrorf(ErrCodeUnprocessable, "invalid new username format")
 	}
 
 	if arg.Account.Username == arg.NewUsername {
-		return NewServiceError(ErrCodeUnprocessable, "new username must be different from the old username")
+		return NewServiceErrorf(ErrCodeUnprocessable, "new username must be different from the old username")
 	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
@@ -38,11 +38,11 @@ func (s *EndpointService) UpdateUsernameByID(ctx context.Context, arg UpdateUser
 	}
 
 	if len(accounts) > 1 {
-		return NewServiceError(ErrCodeInternal, "multiple accounts found with the same ID")
+		return NewServiceErrorf(ErrCodeInternal, "multiple accounts found with the same ID")
 	}
 
 	if len(accounts) == 1 {
-		return NewServiceError(ErrCodeUsernameTaken, "username already taken")
+		return NewServiceErrorf(ErrCodeUsernameTaken, "username already taken")
 	}
 
 	err = queries.UpdateAccountUsername(ctx, repository.UpdateAccountUsernameParams{
@@ -70,11 +70,11 @@ type UpdatePasswordByIDParams struct {
 func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePasswordByIDParams) error {
 	newPasswordValid := s.passwordRegex.MatchString(arg.NewPassword)
 	if !newPasswordValid {
-		return NewServiceError(ErrCodeUnprocessable, "invalid new password format")
+		return NewServiceErrorf(ErrCodeUnprocessable, "invalid new password format")
 	}
 
 	if arg.OldPassword == arg.NewPassword {
-		return NewServiceError(ErrCodeUnprocessable, "new password must be different from the old password")
+		return NewServiceErrorf(ErrCodeUnprocessable, "new password must be different from the old password")
 	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
@@ -90,7 +90,7 @@ func (s *EndpointService) UpdatePasswordByID(ctx context.Context, arg UpdatePass
 		return NewServiceErrorf(ErrCodeInternal, "failed to compare passwords: %v", err)
 	}
 	if !valid {
-		return NewServiceError(ErrCodeUnprocessable, "old password is incorrect")
+		return NewServiceErrorf(ErrCodeUnprocessable, "old password is incorrect")
 	}
 
 	// Update password hash

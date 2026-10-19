@@ -4,6 +4,8 @@ import "fmt"
 
 type ErrorCode int
 
+// TODO: Add more generic errors
+
 // Generic error codes
 const (
 	ErrCodeBadRequest ErrorCode = -1 - iota
@@ -22,21 +24,25 @@ const (
 )
 
 type ServiceError struct {
-	Code    ErrorCode
-	Message string
+	Code ErrorCode
+	Err  error
 }
 
 func NewServiceErrorf(code ErrorCode, format string, args ...any) *ServiceError {
-	return NewServiceError(code, fmt.Sprintf(format, args...))
+	return NewServiceError(code, fmt.Errorf(format, args...))
 }
 
-func NewServiceError(code ErrorCode, message string) *ServiceError {
+func NewServiceError(code ErrorCode, err error) *ServiceError {
 	return &ServiceError{
-		Code:    code,
-		Message: message,
+		Code: code,
+		Err:  err,
 	}
 }
 
 func (e *ServiceError) Error() string {
-	return e.Message
+	return e.Err.Error()
+}
+
+func (e *ServiceError) Unwrap() error {
+	return e.Err
 }

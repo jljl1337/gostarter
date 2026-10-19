@@ -19,12 +19,12 @@ type SignUpParams struct {
 func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 	usernameValid := s.usernameRegex.MatchString(arg.Username)
 	if !usernameValid {
-		return NewServiceError(ErrCodeUnprocessable, "invalid username format")
+		return NewServiceErrorf(ErrCodeUnprocessable, "invalid username format")
 	}
 
 	passwordValid := s.passwordRegex.MatchString(arg.Password)
 	if !passwordValid {
-		return NewServiceError(ErrCodeUnprocessable, "invalid password format")
+		return NewServiceErrorf(ErrCodeUnprocessable, "invalid password format")
 	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
@@ -41,11 +41,11 @@ func (s *EndpointService) SignUp(ctx context.Context, arg SignUpParams) error {
 	}
 
 	if len(users) > 1 {
-		return NewServiceError(ErrCodeInternal, "multiple users found with the same username")
+		return NewServiceErrorf(ErrCodeInternal, "multiple users found with the same username")
 	}
 
 	if len(users) > 0 {
-		return NewServiceError(ErrCodeUsernameTaken, "username already exists")
+		return NewServiceErrorf(ErrCodeUsernameTaken, "username already exists")
 	}
 
 	passwordHash, err := s.hashingManager.HashPassword(arg.Password)
@@ -132,7 +132,7 @@ type SignInParams struct {
 // It returns non-empty session token and CSRF token if the credentials are valid.
 func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string, string, error) {
 	if arg.Username == "" {
-		return "", "", NewServiceError(ErrCodeBadRequest, "username must be provided")
+		return "", "", NewServiceErrorf(ErrCodeBadRequest, "username must be provided")
 	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
@@ -151,12 +151,12 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 	}
 
 	if len(sessions) > 1 {
-		return "", "", NewServiceError(ErrCodeInternal, "multiple sessions found with the same token")
+		return "", "", NewServiceErrorf(ErrCodeInternal, "multiple sessions found with the same token")
 	}
 
 	if len(sessions) < 1 {
 		log.Debug("Session not found")
-		return "", "", NewServiceError(ErrCodeUnauthorized, "invalid pre-session")
+		return "", "", NewServiceErrorf(ErrCodeUnauthorized, "invalid pre-session")
 	}
 
 	session := sessions[0]
@@ -164,20 +164,20 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 	// Check if the session is already associated with a user
 	if session.AccountID != nil {
 		log.Debug("Session is is not a pre-session")
-		return "", "", NewServiceError(ErrCodeUnauthorized, "invalid pre-session")
+		return "", "", NewServiceErrorf(ErrCodeUnauthorized, "invalid pre-session")
 	}
 
 	// CSRF token does not match
 	if arg.PreSessionCSRFToken != "" && session.CsrfToken != arg.PreSessionCSRFToken {
 		log.Debug("CSRF token does not match")
-		return "", "", NewServiceError(ErrCodeUnauthorized, "csrf token does not match")
+		return "", "", NewServiceErrorf(ErrCodeUnauthorized, "csrf token does not match")
 	}
 
 	// Session expired
 	now := time.Now()
 	nowISO8601 := format.TimeToISO8601(now)
 	if session.ExpiresAt < nowISO8601 {
-		return "", "", NewServiceError(ErrCodeUnauthorized, "pre-session expired")
+		return "", "", NewServiceErrorf(ErrCodeUnauthorized, "pre-session expired")
 	}
 
 	// Validate credentials
@@ -187,12 +187,12 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 	}
 
 	if len(accounts) > 1 {
-		return "", "", NewServiceError(ErrCodeInternal, "multiple accounts found with the same username")
+		return "", "", NewServiceErrorf(ErrCodeInternal, "multiple accounts found with the same username")
 	}
 
 	if len(accounts) < 1 {
 		log.Debug("Account not found")
-		return "", "", NewServiceError(ErrCodeInvalidCredentials, "invalid credentials")
+		return "", "", NewServiceErrorf(ErrCodeInvalidCredentials, "invalid credentials")
 	}
 
 	account := accounts[0]
@@ -204,7 +204,7 @@ func (s *EndpointService) SignIn(ctx context.Context, arg SignInParams) (string,
 
 	if !valid {
 		log.Debug("Invalid password")
-		return "", "", NewServiceError(ErrCodeInvalidCredentials, "invalid credentials")
+		return "", "", NewServiceErrorf(ErrCodeInvalidCredentials, "invalid credentials")
 	}
 
 	// Rehash password if needed
@@ -313,7 +313,7 @@ func (s *EndpointService) SignOutAllSession(ctx context.Context, account reposit
 	}
 
 	if rows < 1 {
-		return NewServiceError(ErrCodeInternal, "no sessions deleted")
+		return NewServiceErrorf(ErrCodeInternal, "no sessions deleted")
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -333,18 +333,18 @@ func (s *EndpointService) CSRFToken(ctx context.Context, sessionToken string) (s
 	}
 
 	if len(sessions) > 1 {
-		return "", NewServiceError(ErrCodeInternal, "multiple sessions found with the same token")
+		return "", NewServiceErrorf(ErrCodeInternal, "multiple sessions found with the same token")
 	}
 
 	if len(sessions) < 1 {
-		return "", NewServiceError(ErrCodeUnauthorized, "invalid session")
+		return "", NewServiceErrorf(ErrCodeUnauthorized, "invalid session")
 	}
 
 	session := sessions[0]
 
 	// Check if pre-session is expired
 	if session.ExpiresAt < generator.NowISO8601() {
-		return "", NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return "", NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	return session.CsrfToken, nil
