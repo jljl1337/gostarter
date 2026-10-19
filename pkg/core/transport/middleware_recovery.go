@@ -9,7 +9,7 @@ func (m *MiddlewareProvider) Recovery() Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if recovered := recover(); recovered != nil {
-					m.responseHandler.WriteErrorf(w, "server panic: %w", recovered)
+					m.responseHandler.WriteErrorf(w, "server panic: %v", recovered)
 				}
 			}()
 
