@@ -14,7 +14,7 @@ func (s *EndpointService) GetAccounts(ctx context.Context) ([]repository.Account
 
 	accounts, err := queries.GetAccounts(ctx)
 	if err != nil {
-		return nil, service.NewServiceErrorf(service.ErrCodeInternal, "failed to get accounts: %v", err)
+		return nil, service.NewServiceErrorf(service.ErrCodeInternal, "failed to get accounts: %w", err)
 	}
 
 	return accounts, nil
@@ -33,7 +33,7 @@ func (s *EndpointService) UpdateAccountRoleByID(ctx context.Context, arg UpdateA
 
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -54,11 +54,11 @@ func (s *EndpointService) UpdateAccountRoleByID(ctx context.Context, arg UpdateA
 		UpdatedAt: generator.NowISO8601(),
 	})
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update account role: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update account role: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (s *EndpointService) UpdateAccountRoleByID(ctx context.Context, arg UpdateA
 func (s *EndpointService) DeleteAccountByID(ctx context.Context, actor repository.Account, accountID string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -81,11 +81,11 @@ func (s *EndpointService) DeleteAccountByID(ctx context.Context, actor repositor
 
 	err = queries.DeleteAccount(ctx, accountID)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete account: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete account: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return nil
@@ -100,7 +100,7 @@ func (s *EndpointService) DeleteAccountByID(ctx context.Context, actor repositor
 func (s *EndpointService) getManagedAccountByID(ctx context.Context, queries *repository.Queries, actor repository.Account, accountID string) (repository.Account, error) {
 	accounts, err := queries.GetAccountsByID(ctx, accountID)
 	if err != nil {
-		return repository.Account{}, service.NewServiceErrorf(service.ErrCodeInternal, "failed to get account by ID: %v", err)
+		return repository.Account{}, service.NewServiceErrorf(service.ErrCodeInternal, "failed to get account by ID: %w", err)
 	}
 
 	if len(accounts) == 0 {
@@ -115,7 +115,7 @@ func (s *EndpointService) getManagedAccountByID(ctx context.Context, queries *re
 
 	compare, err := s.roleManager.CompareRoles(account.Role, actor.Role)
 	if err != nil {
-		return repository.Account{}, service.NewServiceErrorf(service.ErrCodeInternal, "failed to compare roles: %v", err)
+		return repository.Account{}, service.NewServiceErrorf(service.ErrCodeInternal, "failed to compare roles: %w", err)
 	}
 
 	if compare >= 0 {

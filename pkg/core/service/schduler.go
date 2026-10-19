@@ -26,7 +26,7 @@ func (s *SchedulerService) BackupSQLiteDBFromEnv(ctx context.Context) error {
 func (s *SchedulerService) CleanupExpiredSessions(ctx context.Context) (int64, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return 0, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
+		return 0, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -35,11 +35,11 @@ func (s *SchedulerService) CleanupExpiredSessions(ctx context.Context) (int64, e
 	now := generator.NowISO8601()
 	deleted, err := queries.DeleteSessionByExpiresAt(ctx, now)
 	if err != nil {
-		return 0, NewServiceErrorf(ErrCodeInternal, "failed to delete expired sessions: %v", err)
+		return 0, NewServiceErrorf(ErrCodeInternal, "failed to delete expired sessions: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return 0, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
+		return 0, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return deleted, nil

@@ -13,7 +13,7 @@ import (
 func (s *EndpointService) CreateNote(ctx context.Context, accountID string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -32,15 +32,15 @@ func (s *EndpointService) CreateNote(ctx context.Context, accountID string) erro
 
 	err = queries.CreateNote(ctx, note)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create note: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create note: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	if err := s.queueManager.Enqueue(env.QueueLaneNotePositivity, note.ID); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %w", err)
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func (s *EndpointService) GetNotesByAccountID(ctx context.Context, accountID str
 
 	notes, err := queries.GetNotesByAccountID(ctx, accountID)
 	if err != nil {
-		return nil, service.NewServiceErrorf(service.ErrCodeInternal, "failed to get notes by account ID: %v", err)
+		return nil, service.NewServiceErrorf(service.ErrCodeInternal, "failed to get notes by account ID: %w", err)
 	}
 
 	return notes, nil
@@ -60,7 +60,7 @@ func (s *EndpointService) GetNotesByAccountID(ctx context.Context, accountID str
 func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID string, noteID string, newBody string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -70,7 +70,7 @@ func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID stri
 
 	notes, err := queries.GetNoteByID(ctx, noteID)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to get note by ID: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to get note by ID: %w", err)
 	}
 
 	if len(notes) == 0 {
@@ -94,15 +94,15 @@ func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID stri
 
 	err = queries.UpdateNoteBodyByID(ctx, updateParams)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note by ID: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note by ID: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	if err := s.queueManager.Enqueue(env.QueueLaneNotePositivity, note.ID); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %w", err)
 	}
 
 	return nil
@@ -111,7 +111,7 @@ func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID stri
 func (s *EndpointService) DeleteNoteByID(ctx context.Context, accountID string, noteID string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -119,7 +119,7 @@ func (s *EndpointService) DeleteNoteByID(ctx context.Context, accountID string, 
 
 	notes, err := queries.GetNoteByID(ctx, noteID)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to get note by ID: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to get note by ID: %w", err)
 	}
 
 	if len(notes) == 0 {
@@ -137,11 +137,11 @@ func (s *EndpointService) DeleteNoteByID(ctx context.Context, accountID string, 
 
 	err = queries.DeleteNoteByID(ctx, noteID)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete note by ID: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete note by ID: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return nil

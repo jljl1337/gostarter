@@ -59,7 +59,7 @@ func (m *MiddlewareProvider) Auth() Middleware {
 			if m.roleManager.HasMultipleRoles() {
 				authorized, err := authorizeSubpath(m.roleManager, account.Role, r.URL.Path)
 				if err != nil {
-					m.responseHandler.WriteErrorf(w, "failed to authorize subpath: %v", err)
+					m.responseHandler.WriteErrorf(w, "failed to authorize subpath: %w", err)
 					return
 				}
 
@@ -94,7 +94,7 @@ func authorizeSubpath(roleManager *role.RoleManager, accountRole, path string) (
 
 	compare, err := roleManager.CompareRoles(accountRole, firstSegment)
 	if err != nil {
-		return false, fmt.Errorf("failed to compare roles: %v", err)
+		return false, fmt.Errorf("failed to compare roles: %w", err)
 	}
 
 	if compare < 0 {

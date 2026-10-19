@@ -44,7 +44,7 @@ func (s *QueueService) UpdateNotePositivity(payload string) error {
 
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -52,7 +52,7 @@ func (s *QueueService) UpdateNotePositivity(payload string) error {
 
 	notes, err := queries.GetNoteByID(ctx, payload)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to get note by ID: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to get note by ID: %w", err)
 	}
 
 	if len(notes) == 0 {
@@ -84,11 +84,11 @@ func (s *QueueService) UpdateNotePositivity(payload string) error {
 
 	err = queries.UpdateNotePositivityByID(ctx, updateParams)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note positivity by ID: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note positivity by ID: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return nil

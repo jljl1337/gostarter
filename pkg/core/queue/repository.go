@@ -98,6 +98,7 @@ func (r *SQLTaskRepository) InsertIfNotInQueue(t Task) error {
 	return nil
 }
 
+// TODO: return error
 func (r *SQLTaskRepository) Dequeue(lane string) (Task, bool) {
 	ctx := context.Background()
 

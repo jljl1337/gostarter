@@ -25,7 +25,7 @@ func NewMiddlewareService(db *sqlx.DB) *MiddlewareService {
 func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Context, sessionToken, CSRFToken string) (*repository.Account, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %v", err)
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -34,40 +34,40 @@ func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Conte
 	sessions, err := queries.GetSessionByToken(ctx, sessionToken)
 
 	if err != nil {
-		return nil, NewServiceErrorf(ErrCodeInternal, "failed to get session: %v", err)
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to get session: %w", err)
 	}
 
 	if len(sessions) > 1 {
-		return nil, NewServiceError(ErrCodeInternal, "multiple sessions found with the same token")
+		return nil, NewServiceErrorf(ErrCodeInternal, "multiple sessions found with the same token")
 	}
 
 	if len(sessions) < 1 {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	session := sessions[0]
 
 	// Return unauthorized if the session is a pre session
 	if session.AccountID == nil {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	// CSRF token does not match
 	if CSRFToken != "" && session.CsrfToken != CSRFToken {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	// Session expired
 	now := time.Now()
 	nowISO8601 := format.TimeToISO8601(now)
 	if session.ExpiresAt < nowISO8601 {
-		return nil, NewServiceError(ErrCodeUnauthorized, "unauthorized")
+		return nil, NewServiceErrorf(ErrCodeUnauthorized, "unauthorized")
 	}
 
 	// Only refresh session if remaining lifetime is below threshold
 	expiresAt, err := format.ISO8601ToTime(session.ExpiresAt)
 	if err != nil {
-		return nil, NewServiceErrorf(ErrCodeInternal, "failed to parse session expiration: %v", err)
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to parse session expiration: %w", err)
 	}
 
 	remainingLifetimeMin := expiresAt.Sub(now).Minutes()
@@ -79,18 +79,18 @@ func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Conte
 			UpdatedAt: nowISO8601,
 		})
 		if err != nil {
-			return nil, NewServiceErrorf(ErrCodeInternal, "failed to refresh session: %v", err)
+			return nil, NewServiceErrorf(ErrCodeInternal, "failed to refresh session: %w", err)
 		}
 	}
 
 	// Get account associated with the session
 	account, err := queries.GetAccountByID(ctx, *session.AccountID)
 	if err != nil {
-		return nil, NewServiceErrorf(ErrCodeInternal, "failed to get account by ID: %v", err)
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to get account by ID: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %v", err)
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return &account, nil

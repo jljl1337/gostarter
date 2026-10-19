@@ -30,13 +30,13 @@ var GenericErrorMap = map[service.ErrorCode]service.ErrorCode{
 }
 
 /*
-JsonCodeMap maps specific service error codes to JSON error codes. It is used
+SpecificJSONCodeMap maps specific service error codes to JSON error codes. It is used
 to provide consistent JSON error responses across the application. Similar to
 GenericErrorMap, this map can be extended to include more specific error codes
 as needed. The JSON error codes are intended to be used by the frontend or any
 API consumers to handle errors in a standardized way.
 */
-var JsonCodeMap = map[service.ErrorCode]string{
+var SpecificJSONCodeMap = map[service.ErrorCode]string{
 	service.ErrCodeUsernameTaken:      "gsUsernameTaken",
 	service.ErrCodeInvalidCredentials: "gsInvalidCredentials",
 }
@@ -64,7 +64,7 @@ NewResponseHandler with custom mappings to ensure that error handling is
 tailored to the specific needs of your application.
 */
 func NewDefaultResponseHandler() *ResponseHandler {
-	return NewResponseHandler(GenericErrorMap, JsonCodeMap)
+	return NewResponseHandler(GenericErrorMap, SpecificJSONCodeMap)
 }
 
 /*
@@ -106,9 +106,10 @@ func (rh *ResponseHandler) WriteMessage(w http.ResponseWriter, message string, s
 // formatted message. It creates a new internal error with the provided format
 // and arguments, and then calls [*ResponseHandler.WriteServiceError] to handle
 // the response.
+//
+// TODO: rename to WriteInternalErrorf
 func (rh *ResponseHandler) WriteErrorf(w http.ResponseWriter, format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
-	rh.WriteServiceError(w, errors.New(message))
+	rh.WriteServiceError(w, fmt.Errorf(format, args...))
 }
 
 /*
@@ -119,6 +120,8 @@ error message.
 
 It is also safe to write any internal errors with this function, it will log
 the error and return a generic internal server error message to the client.
+
+TODO: rename to WriteError
 */
 func (rh *ResponseHandler) WriteServiceError(w http.ResponseWriter, err error) {
 	var serviceErr *service.ServiceError
@@ -127,15 +130,17 @@ func (rh *ResponseHandler) WriteServiceError(w http.ResponseWriter, err error) {
 	var jsonCode string
 	var message string
 
+	// TODO: move generic error mapping to service layer
 	if errors.As(err, &serviceErr) {
 		genericErr := rh.mapToGenericServiceError(serviceErr)
 		statusCode = rh.mapToHTTPStatus(genericErr)
-		if *genericErr == *serviceErr {
-			jsonCode = strconv.Itoa(statusCode)
+		specificCode, exists := rh.jsonCodeMap[genericErr.Code]
+		if exists {
+			jsonCode = specificCode
 		} else {
-			jsonCode = rh.mapToJSONCode(serviceErr)
+			jsonCode = strconv.Itoa(statusCode)
 		}
-		message = genericErr.Message
+		message = genericErr.Err.Error()
 
 		if statusCode == http.StatusInternalServerError {
 			log.Errorf("Internal server error: service error: %v", genericErr)
@@ -152,28 +157,20 @@ func (rh *ResponseHandler) WriteServiceError(w http.ResponseWriter, err error) {
 	rh.WriteJSONCodeMessage(w, message, statusCode, jsonCode)
 }
 
-func (rh *ResponseHandler) mapToGenericServiceError(err error) *service.ServiceError {
-	var serviceErr *service.ServiceError
-	if errors.As(err, &serviceErr) {
-		if genericCode, exists := rh.genericErrorMap[serviceErr.Code]; exists {
-			return service.NewServiceError(genericCode, serviceErr.Message)
-		}
+func (rh *ResponseHandler) mapToGenericServiceError(err *service.ServiceError) *service.ServiceError {
+	if genericCode, exists := rh.genericErrorMap[err.Code]; exists {
+		return service.NewServiceError(genericCode, err.Err)
 	}
-	return service.NewServiceError(service.ErrCodeInternal, err.Error())
+
+	return err
 }
 
 func (rh *ResponseHandler) mapToHTTPStatus(err *service.ServiceError) int {
 	if status, exists := rh.httpStatusMap[err.Code]; exists {
 		return status
 	}
-	return http.StatusInternalServerError
-}
 
-func (rh *ResponseHandler) mapToJSONCode(err *service.ServiceError) string {
-	if code, exists := rh.jsonCodeMap[err.Code]; exists {
-		return code
-	}
-	return "500"
+	return http.StatusInternalServerError
 }
 
 /*
