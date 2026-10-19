@@ -74,8 +74,13 @@ func (h *customHandler) Handle(ctx context.Context, r slog.Record) error {
 	msg := r.Message
 	formatted := fmt.Sprintf("%s %s %s\n", ts, lvl, msg)
 
-	// Write using standard log or directly to stderr
-	_, err := fmt.Fprint(os.Stdout, formatted)
+	// Write to stdout for levels below error, and stderr for error and above
+	writer := os.Stdout
+	if h.level.Level() >= slog.LevelError {
+		writer = os.Stderr
+	}
+
+	_, err := fmt.Fprint(writer, formatted)
 	return err
 }
 
