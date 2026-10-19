@@ -24,7 +24,7 @@ func NewSchedulerService(db *sqlx.DB) *SchedulerService {
 func (s *SchedulerService) DeleteExpiredNotes(ctx context.Context) (int64, error) {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %v", err)
+		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -33,11 +33,11 @@ func (s *SchedulerService) DeleteExpiredNotes(ctx context.Context) (int64, error
 	deadline := generator.MinutesBeforeNowISO8601(1)
 	deleted, err := queries.DeleteNotesByUpdatedAt(ctx, deadline)
 	if err != nil {
-		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete expired notes: %v", err)
+		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete expired notes: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %v", err)
+		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
 	return deleted, nil
