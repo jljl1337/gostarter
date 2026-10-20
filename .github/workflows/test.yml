@@ -1,4 +1,4 @@
-name: check
+name: test
 on:
   pull_request:
     branches:
@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  check:
-    name: check
+  test:
+    name: test
     runs-on: ubuntu-latest
 
     steps:
@@ -22,5 +22,5 @@ jobs:
       - name: Set up Project
         run: mise run setup
 
-      - name: Run check task
-        run: mise run check
+      - name: Run test task
+        run: mise run test_all

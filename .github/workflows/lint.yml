@@ -1,0 +1,26 @@
+name: lint
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up mise
+        uses: jdx/mise-action@v5
+
+      - name: Set up Project
+        run: mise run setup
+
+      - name: Run linting task
+        run: mise run lint
