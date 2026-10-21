@@ -11,23 +11,25 @@ import (
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 )
 
+// TaskRepository defines the interface for interacting with the task queue in
+// the data store.
 type TaskRepository interface {
 	// PendingLanes returns a list of lanes that have tasks with the status
 	// 'pending' or 'running'.
-	PendingLanes() ([]string, error)
+	PendingLanes(ctx context.Context) ([]string, error)
 	// ResetRunningTasks resets all tasks with the status 'running' back to
 	// 'pending'.
-	ResetRunningTasks() error
+	ResetRunningTasks(ctx context.Context) error
 	// InsertIfNotInQueue adds a new task to the queue with the status
 	// 'pending', and if a task with the same lane and payload already exists in
 	// the queue with the status 'pending', it does not insert a duplicate.
-	InsertIfNotInQueue(t Task) error
+	InsertIfNotInQueue(ctx context.Context, t Task) error
 	// Dequeue fetches the next pending task for the specified lane and marks it
 	// as 'running'. It returns the task and a boolean indicating whether a task
 	// was found.
-	Dequeue(lane string) (Task, bool)
+	Dequeue(ctx context.Context, lane string) (Task, bool, error)
 	// UpdateTaskStatus updates the status of a task by its ID.
-	UpdateTaskStatus(taskID string, success bool) error
+	UpdateTaskStatus(ctx context.Context, taskID string, success bool) error
 }
 
 type SQLTaskRepository struct {
@@ -38,9 +40,9 @@ func NewSQLTaskRepository(db *sqlx.DB) TaskRepository {
 	return &SQLTaskRepository{db: db}
 }
 
-func (r *SQLTaskRepository) PendingLanes() ([]string, error) {
-	ctx := context.Background()
+// TODO: use transaction in all methods
 
+func (r *SQLTaskRepository) PendingLanes(ctx context.Context) ([]string, error) {
 	queries := repository.NewQueries(r.db)
 	lanes, err := queries.GetLanesByStatus(ctx, env.QueueTaskStatusPending)
 	if err != nil {
@@ -50,9 +52,7 @@ func (r *SQLTaskRepository) PendingLanes() ([]string, error) {
 	return lanes, nil
 }
 
-func (r *SQLTaskRepository) ResetRunningTasks() error {
-	ctx := context.Background()
-
+func (r *SQLTaskRepository) ResetRunningTasks(ctx context.Context) error {
 	queries := repository.NewQueries(r.db)
 	_, err := queries.UpdateQueueTaskStatusByStatus(ctx, repository.UpdateQueueTaskStatusByStatusParams{
 		OldStatus: env.QueueTaskStatusRunning,
@@ -65,9 +65,7 @@ func (r *SQLTaskRepository) ResetRunningTasks() error {
 
 	return nil
 }
-func (r *SQLTaskRepository) InsertIfNotInQueue(t Task) error {
-	ctx := context.Background()
-
+func (r *SQLTaskRepository) InsertIfNotInQueue(ctx context.Context, t Task) error {
 	now := generator.NowISO8601()
 	queries := repository.NewQueries(r.db)
 
@@ -98,21 +96,17 @@ func (r *SQLTaskRepository) InsertIfNotInQueue(t Task) error {
 	return nil
 }
 
-// TODO: return error
-func (r *SQLTaskRepository) Dequeue(lane string) (Task, bool) {
-	ctx := context.Background()
-
+func (r *SQLTaskRepository) Dequeue(ctx context.Context, lane string) (Task, bool, error) {
 	queries := repository.NewQueries(r.db)
 	tasks, err := queries.GetFirstTaskInLane(ctx, repository.GetFirstTaskInLaneParams{
 		Lane:   lane,
 		Status: env.QueueTaskStatusPending,
 	})
 	if err != nil {
-		fmt.Printf("failed to get queue task: %v\n", err)
-		return Task{}, false
+		return Task{}, false, fmt.Errorf("failed to get first task in lane: %w", err)
 	}
 	if len(tasks) < 1 {
-		return Task{}, false
+		return Task{}, false, nil
 	}
 
 	task := tasks[0]
@@ -122,20 +116,17 @@ func (r *SQLTaskRepository) Dequeue(lane string) (Task, bool) {
 		UpdatedAt: generator.NowISO8601(),
 	})
 	if err != nil {
-		fmt.Printf("failed to update queue task status: %v\n", err)
-		return Task{}, false
+		return Task{}, false, fmt.Errorf("failed to update task status to running: %w", err)
 	}
 
 	return Task{
 		ID:      task.ID,
 		Lane:    task.Lane,
 		Payload: task.Payload,
-	}, true
+	}, true, nil
 }
 
-func (r *SQLTaskRepository) UpdateTaskStatus(taskID string, success bool) error {
-	ctx := context.Background()
-
+func (r *SQLTaskRepository) UpdateTaskStatus(ctx context.Context, taskID string, success bool) error {
 	status := env.QueueTaskStatusFailed
 	if success {
 		status = env.QueueTaskStatusSucceeded

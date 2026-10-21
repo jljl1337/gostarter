@@ -59,12 +59,14 @@ func NewQueueManager(repo TaskRepository, newID func() string, laneList ...Lane)
 // Resume starts workers for any lane that already has pending/running tasks
 // left over from before a restart. Call once at startup.
 func (m *QueueManager) Resume() error {
-	err := m.repo.ResetRunningTasks()
+	ctx := m.ctx
+
+	err := m.repo.ResetRunningTasks(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to reset running tasks: %w", err)
 	}
 
-	lanes, err := m.repo.PendingLanes()
+	lanes, err := m.repo.PendingLanes(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get pending lanes: %w", err)
 	}
@@ -78,7 +80,7 @@ func (m *QueueManager) Resume() error {
 
 // Enqueue inserts a task into the given lane and activates that lane's
 // worker if it isn't already running.
-func (m *QueueManager) Enqueue(lane, payload string) error {
+func (m *QueueManager) Enqueue(ctx context.Context, lane, payload string) error {
 	if _, ok := m.handlers[lane]; !ok {
 		return fmt.Errorf("no handler registered for lane %q", lane)
 	}
@@ -88,7 +90,7 @@ func (m *QueueManager) Enqueue(lane, payload string) error {
 		Lane:    lane,
 		Payload: payload,
 	}
-	if err := m.repo.InsertIfNotInQueue(task); err != nil {
+	if err := m.repo.InsertIfNotInQueue(ctx, task); err != nil {
 		return fmt.Errorf("failed to insert task: %w", err)
 	}
 
@@ -122,6 +124,16 @@ func (m *QueueManager) ensureLaneRunning(lane string) *laneState {
 
 func (m *QueueManager) runLane(lane string, l *laneState) {
 	defer m.wg.Done()
+	// Remove the lane from the map on exit so a later Enqueue/Resume can
+	// restart the worker instead of targeting a dead one.
+	defer func() {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		if m.lanes[lane] == l {
+			delete(m.lanes, lane)
+		}
+	}()
+
 	handler := m.handlers[lane]
 
 	for {
@@ -129,15 +141,22 @@ func (m *QueueManager) runLane(lane string, l *laneState) {
 			return
 		}
 
-		task, ok := m.repo.Dequeue(lane)
+		task, ok, err := m.repo.Dequeue(m.ctx, lane)
+		if err != nil {
+			if m.ctx.Err() == nil {
+				log.Errorf("failed to dequeue task for lane %s: %v", lane, err)
+			}
+			return
+		}
+
 		if ok {
 			err := handler(task.Payload)
 			if err != nil {
 				log.Errorf("queue task %s failed: %v", task.ID, err)
 			}
 
-			err = m.repo.UpdateTaskStatus(task.ID, err == nil)
-			if err != nil {
+			err = m.repo.UpdateTaskStatus(m.ctx, task.ID, err == nil)
+			if err != nil && m.ctx.Err() == nil {
 				log.Errorf("failed to update task status: %v", err)
 			}
 			continue
