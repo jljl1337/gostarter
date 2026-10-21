@@ -39,7 +39,7 @@ func (s *EndpointService) CreateNote(ctx context.Context, accountID string) erro
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
-	if err := s.queueManager.Enqueue(env.QueueLaneNotePositivity, note.ID); err != nil {
+	if err := s.queueManager.Enqueue(ctx, env.QueueLaneNotePositivity, note.ID); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %w", err)
 	}
 
@@ -101,7 +101,7 @@ func (s *EndpointService) UpdateNoteBodyByID(ctx context.Context, accountID stri
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 
-	if err := s.queueManager.Enqueue(env.QueueLaneNotePositivity, note.ID); err != nil {
+	if err := s.queueManager.Enqueue(ctx, env.QueueLaneNotePositivity, note.ID); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to enqueue note: %w", err)
 	}
 
