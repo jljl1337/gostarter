@@ -12,23 +12,41 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// EnvLoader is a utility for loading environment variables into a struct. It
+// can also read environment variables from .env files and supports default
+// values for struct fields.
+//
+// The Prefix field allows you to specify a prefix for environment variable
+// names. If set, all environment variable lookups will be prefixed with this
+// value followed by an underscore. For example, if Prefix is set to "MYAPP",
+// then the environment variable "DATABASE_URL" will be looked up as
+// "MYAPP_DATABASE_URL".
 type EnvLoader struct {
 	Prefix string
 }
 
+// ReadOptionalEnvFiles calls [ReadEnvFiles] but ignores the error if the file
+// doesn't exist.
 func (e *EnvLoader) ReadOptionalEnvFiles(files ...string) error {
 	// It's okay if the .env file doesn't exist, we can still proceed
-	if err := godotenv.Load(files...); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := e.ReadEnvFiles(files...); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("error loading .env files: %w", err)
 	}
 
 	return nil
 }
 
+// ReadEnvFiles reads environment variables from the specified .env files.
 func (e *EnvLoader) ReadEnvFiles(files ...string) error {
 	return godotenv.Load(files...)
 }
 
+// LoadIntoStruct loads environment variables into the provided struct. It uses
+// the "env" struct tag to determine the environment variable name. If the tag
+// is not present, it converts the struct field name to screaming snake case.
+// It also supports default values specified in the "default" struct tag.
+//
+// [GetString] is used to retrieve the environment variable values.
 func (e *EnvLoader) LoadIntoStruct(target any) error {
 	pointer := reflect.ValueOf(target)
 	if pointer.Kind() != reflect.Pointer || pointer.IsNil() {
@@ -138,6 +156,11 @@ func (e *EnvLoader) setField(field reflect.Value, value string) error {
 	return nil
 }
 
+// GetString retrieves the value of the environment variable specified by key.
+// If a corresponding *_FILE environment variable is set, it reads the value
+// from the specified file. Otherwise, if the environment variable is not set,
+// it returns the provided defaultValue. The `key` parameter is
+// case-insensitive and will be converted to uppercase.
 func (e *EnvLoader) GetString(key string, defaultValue string) (string, error) {
 	if e.Prefix != "" {
 		key = e.Prefix + "_" + key
