@@ -7,14 +7,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// MustLoadOptionalEnvFile calls [LoadOptionalEnvFile] and panics if an
-// error occurs.
-func MustLoadOptionalEnvFile(files ...string) {
-	if err := LoadOptionalEnvFile(files...); err != nil {
-		panic(err)
-	}
-}
-
 // LoadOptionalEnvFile attempts to load environment variables from a list of
 // .env files. If a file does not exist, it will be ignored, allowing the
 // application to proceed with existing environment variables. If any other

@@ -35,11 +35,11 @@ type Argon2idHasher struct {
 
 func NewArgon2idHasherFromEnv() (*Argon2idHasher, error) {
 	params := NewArgon2idHasherParams{
-		Memory:      env.PasswordArgon2idMemory,
-		Iterations:  env.PasswordArgon2idIterations,
-		Parallelism: env.PasswordArgon2idParallelism,
-		SaltLength:  env.PasswordArgon2idSaltLength,
-		KeyLength:   env.PasswordArgon2idKeyLength,
+		Memory:      env.Variables.PasswordArgon2idMemory,
+		Iterations:  env.Variables.PasswordArgon2idIterations,
+		Parallelism: env.Variables.PasswordArgon2idParallelism,
+		SaltLength:  env.Variables.PasswordArgon2idSaltLength,
+		KeyLength:   env.Variables.PasswordArgon2idKeyLength,
 	}
 
 	return NewArgon2idHasher(params)

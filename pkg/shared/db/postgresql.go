@@ -15,7 +15,7 @@ variables defined in the env package. It returns a pointer to sqlx.DB and an
 error if any occurs during the connection process.
 */
 func NewPostgreSQLDBFromEnv() (*sqlx.DB, error) {
-	return NewPostgreSQLDB(env.PostgreSQLURL)
+	return NewPostgreSQLDB(env.Variables.PostgreSQLURL)
 }
 
 /*

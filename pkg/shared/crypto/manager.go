@@ -32,7 +32,7 @@ func NewHashingManager(hasherList ...Hasher) (*HashingManager, error) {
 		hasherMap[hasher.Name()] = hasher
 	}
 
-	defaultHasherName := env.PasswordHashingAlgorithm
+	defaultHasherName := env.Variables.PasswordHashingAlgorithm
 	_, exists := hasherMap[defaultHasherName]
 	if !exists {
 		defaultHasherName = hasherList[0].Name()

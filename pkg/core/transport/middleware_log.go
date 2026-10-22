@@ -25,7 +25,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 func (m *MiddlewareProvider) Logging() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/health" && !env.LogHealthCheck {
+			if r.URL.Path == "/health" && !env.Variables.LogHealthCheck {
 				next.ServeHTTP(w, r)
 				return
 			}

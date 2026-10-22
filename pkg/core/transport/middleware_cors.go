@@ -10,7 +10,7 @@ func (m *MiddlewareProvider) CORS() Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Set CORS headers
-			w.Header().Set("Access-Control-Allow-Origin", env.CORSOrigins)
+			w.Header().Set("Access-Control-Allow-Origin", env.Variables.CORSOrigins)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token") // TODO: csrf token header var/env
 			w.Header().Set("Access-Control-Allow-Credentials", "true")

@@ -1,11 +1,17 @@
 package env
 
+import "fmt"
+
 const (
 	DatabaseDriverSQLite             = "sqlite"
 	DatabaseDriverPostgreSQL         = "postgresql"
 	PasswordHashingAlgorithmArgon2id = "argon2id"
 	PasswordHashingAlgorithmBcrypt   = "bcrypt"
-	AlphaNumericCharset              = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	CharsetAlphaNumeric              = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	CharsetAlphabetic                = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	CharsetAlphabeticLowercase       = "abcdefghijklmnopqrstuvwxyz"
+	CharsetAlphabeticUppercase       = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	CharsetNumeric                   = "0123456789"
 
 	QueueTaskStatusPending   = "pending"
 	QueueTaskStatusRunning   = "running"
@@ -13,107 +19,72 @@ const (
 	QueueTaskStatusFailed    = "failed"
 )
 
+// Variables set at build time
 var (
-	// Variables set at build time
-
 	Version   = "dev"
 	CommitSHA = "unknown"
-
-	// Internal variables
-
-	ConstantsSet bool = false
-
-	// Plain variables from environment variables
-
-	DatabaseDriver              string
-	DataDir                     string
-	LiveDataDir                 string
-	BackupDataDir               string
-	SQLiteDir                   string
-	SQLiteLiveFileName          string
-	SQLiteBusyTimeout           string
-	SQLiteBackupEnabled         bool
-	SQLiteBackupCronSchedule    string
-	SQLiteBackupFileName        string
-	PostgreSQLURL               string
-	SessionCleanupEnabled       bool
-	SessionCleanupCronSchedule  string
-	LogLevel                    int
-	LogHealthCheck              bool
-	Port                        string
-	SocketPath                  string
-	SocketPerm                  string
-	GracefulShutdownTimeoutSec  int
-	CORSOrigins                 string
-	PasswordHashingAlgorithm    string
-	PasswordArgon2idMemory      int
-	PasswordArgon2idIterations  int
-	PasswordArgon2idParallelism int
-	PasswordArgon2idSaltLength  int
-	PasswordArgon2idKeyLength   int
-	PasswordBcryptCost          int
-	SessionCookieName           string
-	SessionCookieHTTPOnly       bool
-	SessionCookieSecure         bool
-	SessionCookieSameSite       string
-	SessionTokenLength          int
-	SessionTokenCharset         string
-	SessionLifetimeMin          int
-	SessionRefreshThresholdMin  int
-	PreSessionLifetimeMin       int
-	CSRFTokenLength             int
-	CSRFTokenCharset            string
 )
 
-func MustSetConstants(files ...string) {
-	MustSetConstantsWithPrefix("", files...)
+// Variables loaded from environment variables
+var (
+	Variables Config
+)
+
+type Config struct {
+	DatabaseDriver              string `env:"DATABASE_DRIVER" default:"sqlite"`
+	DataDir                     string `env:"DATA_DIR" default:"data"`
+	LiveDataDir                 string `env:"LIVE_DATA_DIR" default:"live"`
+	BackupDataDir               string `env:"BACKUP_DATA_DIR" default:"backup"`
+	SQLiteDir                   string `env:"SQLITE_DIR" default:"db"`
+	SQLiteLiveFileName          string `env:"SQLITE_LIVE_FILE_NAME" default:"live.db"`
+	SQLiteBusyTimeout           string `env:"SQLITE_BUSY_TIMEOUT" default:"30000"`
+	SQLiteBackupEnabled         bool   `env:"SQLITE_BACKUP_ENABLED" default:"true"`
+	SQLiteBackupCronSchedule    string `env:"SQLITE_BACKUP_CRON_SCHEDULE" default:"0 0 * * *"`
+	SQLiteBackupFileName        string `env:"SQLITE_BACKUP_FILE_NAME" default:"backup.db"`
+	PostgreSQLURL               string `env:"POSTGRESQL_URL" default:""`
+	SessionCleanupEnabled       bool   `env:"SESSION_CLEANUP_ENABLED" default:"true"`
+	SessionCleanupCronSchedule  string `env:"SESSION_CLEANUP_CRON_SCHEDULE" default:"0 0 * * 0"`
+	LogLevel                    int    `env:"LOG_LEVEL" default:"0"`
+	LogHealthCheck              bool   `env:"LOG_HEALTH_CHECK" default:"false"`
+	Port                        string `env:"PORT" default:"3000"`
+	SocketPath                  string `env:"SOCKET_PATH" default:""`
+	SocketPerm                  string `env:"SOCKET_PERM" default:"0666"`
+	GracefulShutdownTimeoutSec  int    `env:"GRACEFUL_SHUTDOWN_TIMEOUT_SEC" default:"30"`
+	CORSOrigins                 string `env:"CORS_ORIGINS" default:"*"`
+	PasswordHashingAlgorithm    string `env:"PASSWORD_HASHING_ALGORITHM" default:"argon2id"`
+	PasswordArgon2idMemory      int    `env:"PASSWORD_ARGON2ID_MEMORY" default:"65536"`
+	PasswordArgon2idIterations  int    `env:"PASSWORD_ARGON2ID_ITERATIONS" default:"3"`
+	PasswordArgon2idParallelism int    `env:"PASSWORD_ARGON2ID_PARALLELISM" default:"1"`
+	PasswordArgon2idSaltLength  int    `env:"PASSWORD_ARGON2ID_SALT_LENGTH" default:"16"`
+	PasswordArgon2idKeyLength   int    `env:"PASSWORD_ARGON2ID_KEY_LENGTH" default:"32"`
+	PasswordBcryptCost          int    `env:"PASSWORD_BCRYPT_COST" default:"12"`
+	SessionCookieName           string `env:"SESSION_COOKIE_NAME" default:"session_token"`
+	SessionCookieHTTPOnly       bool   `env:"SESSION_COOKIE_HTTP_ONLY" default:"true"`
+	SessionCookieSecure         bool   `env:"SESSION_COOKIE_SECURE" default:"false"`
+	SessionCookieSameSite       string `env:"SESSION_COOKIE_SAME_SITE" default:"lax"`
+	SessionTokenLength          int    `env:"SESSION_TOKEN_LENGTH" default:"32"`
+	SessionTokenCharset         string `env:"SESSION_TOKEN_CHARSET" default:"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"`
+	SessionLifetimeMin          int    `env:"SESSION_LIFETIME_MIN" default:"10080"`
+	SessionRefreshThresholdMin  int    `env:"SESSION_REFRESH_THRESHOLD_MIN" default:"1440"`
+	PreSessionLifetimeMin       int    `env:"PRE_SESSION_LIFETIME_MIN" default:"15"`
+	CSRFTokenLength             int    `env:"CSRF_TOKEN_LENGTH" default:"32"`
+	CSRFTokenCharset            string `env:"CSRF_TOKEN_CHARSET" default:"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"`
 }
 
-func MustSetConstantsWithPrefix(prefix string, files ...string) {
-	MustLoadOptionalEnvFile(files...)
-
-	DatabaseDriver = MustGetString(addPrefix("DATABASE_DRIVER", prefix), DatabaseDriverSQLite)
-	DataDir = MustGetString(addPrefix("DATA_DIR", prefix), "data")
-	LiveDataDir = MustGetString(addPrefix("LIVE_DATA_DIR", prefix), "live")
-	BackupDataDir = MustGetString(addPrefix("BACKUP_DATA_DIR", prefix), "backup")
-	SQLiteDir = MustGetString(addPrefix("SQLITE_DIR", prefix), "db")
-	SQLiteLiveFileName = MustGetString(addPrefix("SQLITE_LIVE_FILE_NAME", prefix), "live.db")
-	SQLiteBusyTimeout = MustGetString(addPrefix("SQLITE_BUSY_TIMEOUT", prefix), "30000")
-	SQLiteBackupEnabled = MustGetBool(addPrefix("SQLITE_BACKUP_ENABLED", prefix), true)
-	SQLiteBackupCronSchedule = MustGetString(addPrefix("SQLITE_BACKUP_CRON_SCHEDULE", prefix), "0 0 * * *")
-	SQLiteBackupFileName = MustGetString(addPrefix("SQLITE_BACKUP_FILE_NAME", prefix), "backup.db")
-	PostgreSQLURL = MustGetString(addPrefix("POSTGRESQL_URL", prefix), "")
-	SessionCleanupEnabled = MustGetBool(addPrefix("SESSION_CLEANUP_ENABLED", prefix), true)
-	SessionCleanupCronSchedule = MustGetString(addPrefix("SESSION_CLEANUP_CRON_SCHEDULE", prefix), "0 0 * * 0")
-	LogLevel = MustGetInt(addPrefix("LOG_LEVEL", prefix), 0)
-	LogHealthCheck = MustGetBool(addPrefix("LOG_HEALTH_CHECK", prefix), false)
-	Port = MustGetString(addPrefix("PORT", prefix), "3000")
-	SocketPath = MustGetString(addPrefix("SOCKET_PATH", prefix), "")
-	SocketPerm = MustGetString(addPrefix("SOCKET_PERM", prefix), "0666")
-	GracefulShutdownTimeoutSec = MustGetInt(addPrefix("GRACEFUL_SHUTDOWN_TIMEOUT_SEC", prefix), 30)
-	CORSOrigins = MustGetString(addPrefix("CORS_ORIGINS", prefix), "*")
-	PasswordHashingAlgorithm = MustGetString(addPrefix("PASSWORD_HASHING_ALGORITHM", prefix), PasswordHashingAlgorithmArgon2id)
-	PasswordArgon2idMemory = MustGetInt(addPrefix("PASSWORD_ARGON2ID_MEMORY", prefix), 64*1024)
-	PasswordArgon2idIterations = MustGetInt(addPrefix("PASSWORD_ARGON2ID_ITERATIONS", prefix), 3)
-	PasswordArgon2idParallelism = MustGetInt(addPrefix("PASSWORD_ARGON2ID_PARALLELISM", prefix), 1)
-	PasswordArgon2idSaltLength = MustGetInt(addPrefix("PASSWORD_ARGON2ID_SALT_LENGTH", prefix), 16)
-	PasswordArgon2idKeyLength = MustGetInt(addPrefix("PASSWORD_ARGON2ID_KEY_LENGTH", prefix), 32)
-	PasswordBcryptCost = MustGetInt(addPrefix("PASSWORD_BCRYPT_COST", prefix), 12)
-	SessionCookieName = MustGetString(addPrefix("SESSION_COOKIE_NAME", prefix), "session_token")
-	SessionCookieHTTPOnly = MustGetBool(addPrefix("SESSION_COOKIE_HTTP_ONLY", prefix), true)
-	SessionCookieSecure = MustGetBool(addPrefix("SESSION_COOKIE_SECURE", prefix), false)
-	SessionCookieSameSite = MustGetString(addPrefix("SESSION_COOKIE_SAME_SITE", prefix), "lax")
-	SessionTokenLength = MustGetInt(addPrefix("SESSION_TOKEN_LENGTH", prefix), 32)
-	SessionTokenCharset = MustGetString(addPrefix("SESSION_TOKEN_CHARSET", prefix), AlphaNumericCharset)
-	SessionLifetimeMin = MustGetInt(addPrefix("SESSION_LIFETIME_MIN", prefix), 60*24*7)
-	SessionRefreshThresholdMin = MustGetInt(addPrefix("SESSION_REFRESH_THRESHOLD_MIN", prefix), 60*24)
-	PreSessionLifetimeMin = MustGetInt(addPrefix("PRE_SESSION_LIFETIME_MIN", prefix), 15)
-	CSRFTokenLength = MustGetInt(addPrefix("CSRF_TOKEN_LENGTH", prefix), 32)
-	CSRFTokenCharset = MustGetString(addPrefix("CSRF_TOKEN_CHARSET", prefix), AlphaNumericCharset)
-
-	ConstantsSet = true
+func SetConstants(files ...string) error {
+	return SetConstantsWithPrefix("", files...)
 }
 
-func addPrefix(str, prefix string) string {
-	return prefix + str
+func SetConstantsWithPrefix(prefix string, files ...string) error {
+	err := LoadOptionalEnvFile(files...)
+	if err != nil {
+		return fmt.Errorf("failed to load env files: %w", err)
+	}
+
+	loader := &EnvLoader{Prefix: prefix}
+	if err := loader.LoadIntoStruct(&Variables); err != nil {
+		return fmt.Errorf("failed to load env variables into struct: %w", err)
+	}
+
+	return nil
 }

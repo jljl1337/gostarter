@@ -21,9 +21,12 @@ import (
 )
 
 func MustNewServer(envFile string) *server.Server {
-	env.MustSetConstants(envFile)
+	err := env.SetConstants(envFile)
+	if err != nil {
+		panic(fmt.Errorf("failed to set constants: %w", err))
+	}
 
-	err := log.SetCustomLoggerFromEnv()
+	err = log.SetCustomLoggerFromEnv()
 	if err != nil {
 		panic(fmt.Errorf("failed to set custom logger: %w", err))
 	}

@@ -71,8 +71,8 @@ func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Conte
 	}
 
 	remainingLifetimeMin := expiresAt.Sub(now).Minutes()
-	if remainingLifetimeMin < float64(env.SessionRefreshThresholdMin) {
-		newExpiresAt := generator.MinutesFromNowISO8601(env.SessionLifetimeMin)
+	if remainingLifetimeMin < float64(env.Variables.SessionRefreshThresholdMin) {
+		newExpiresAt := generator.MinutesFromNowISO8601(env.Variables.SessionLifetimeMin)
 		err := queries.UpdateSessionByToken(ctx, repository.UpdateSessionByTokenParams{
 			Token:     sessionToken,
 			ExpiresAt: newExpiresAt,

@@ -1,6 +1,10 @@
 package env
 
-import "github.com/jljl1337/gostarter/pkg/shared/env"
+import (
+	"fmt"
+
+	"github.com/jljl1337/gostarter/pkg/shared/env"
+)
 
 const (
 	QueueLaneNotePositivity = "note_positivity"
@@ -13,12 +17,22 @@ const (
 	RoleUser = "user"
 )
 
-var (
-	DeleteNotesCronSchedule string
-)
+var Variables Config
 
-func MustSetConstants(files ...string) {
-	env.MustSetConstants(files...)
+type Config struct {
+	DeleteNotesCronSchedule string `env:"DELETE_NOTES_CRON_SCHEDULE" default:"* * * * *"`
+}
 
-	DeleteNotesCronSchedule = env.MustGetString("DELETE_NOTES_CRON_SCHEDULE", "* * * * *")
+func SetConstants(files ...string) error {
+	err := env.SetConstants(files...)
+	if err != nil {
+		return fmt.Errorf("failed to set constants: %w", err)
+	}
+
+	loader := &env.EnvLoader{}
+	if err := loader.LoadIntoStruct(&Variables); err != nil {
+		return fmt.Errorf("failed to load environment variables into struct: %w", err)
+	}
+
+	return nil
 }

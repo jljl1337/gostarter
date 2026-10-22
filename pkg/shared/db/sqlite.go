@@ -19,8 +19,8 @@ environment variables defined in the env package. It returns a pointer to
 sqlx.DB and an error if any occurs during the connection process.
 */
 func NewSQLiteDBFromEnv() (*sqlx.DB, error) {
-	DBPath := filepath.Join(env.DataDir, env.LiveDataDir, env.SQLiteDir, env.SQLiteLiveFileName)
-	return NewSQLiteDB(DBPath, env.SQLiteBusyTimeout)
+	DBPath := filepath.Join(env.Variables.DataDir, env.Variables.LiveDataDir, env.Variables.SQLiteDir, env.Variables.SQLiteLiveFileName)
+	return NewSQLiteDB(DBPath, env.Variables.SQLiteBusyTimeout)
 }
 
 /*
@@ -43,7 +43,7 @@ func NewSQLiteDB(path, busyTimeout string) (*sqlx.DB, error) {
 }
 
 func BackupSQLiteDBFromEnv(srcDB *sqlx.DB) error {
-	backupPath := filepath.Join(env.DataDir, env.BackupDataDir, env.SQLiteDir, env.SQLiteBackupFileName)
+	backupPath := filepath.Join(env.Variables.DataDir, env.Variables.BackupDataDir, env.Variables.SQLiteDir, env.Variables.SQLiteBackupFileName)
 	return BackupSQLiteDB(srcDB, backupPath)
 }
 

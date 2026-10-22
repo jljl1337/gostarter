@@ -74,7 +74,7 @@ func (h *EndpointHandler) preSession(w http.ResponseWriter, r *http.Request) {
 
 func (h *EndpointHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	// Input validation
-	preSessionToken, err := r.Cookie(env.SessionCookieName)
+	preSessionToken, err := r.Cookie(env.Variables.SessionCookieName)
 	if err != nil {
 		h.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -119,7 +119,7 @@ func (h *EndpointHandler) signIn(w http.ResponseWriter, r *http.Request) {
 
 func (h *EndpointHandler) signOut(w http.ResponseWriter, r *http.Request) {
 	// Input validation
-	sessionToken, err := r.Cookie(env.SessionCookieName)
+	sessionToken, err := r.Cookie(env.Variables.SessionCookieName)
 	if err != nil {
 		h.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -159,7 +159,7 @@ func (h *EndpointHandler) signOutAll(w http.ResponseWriter, r *http.Request) {
 
 func (h *EndpointHandler) csrfToken(w http.ResponseWriter, r *http.Request) {
 	// Input validation
-	sessionToken, err := r.Cookie(env.SessionCookieName)
+	sessionToken, err := r.Cookie(env.Variables.SessionCookieName)
 	if err != nil {
 		h.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)
 		return
