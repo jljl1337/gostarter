@@ -34,7 +34,7 @@ go.work.sum
 # Data files
 data
 
- macOS
+# macOS
 .DS_Store
 
 # Temporary files
