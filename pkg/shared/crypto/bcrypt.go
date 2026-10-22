@@ -11,7 +11,7 @@ type BcryptHasher struct {
 }
 
 func NewBcryptHasherFromEnv() *BcryptHasher {
-	return NewBcryptHasher(env.PasswordBcryptCost)
+	return NewBcryptHasher(env.Variables.PasswordBcryptCost)
 }
 
 func NewBcryptHasher(cost int) *BcryptHasher {

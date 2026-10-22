@@ -12,11 +12,7 @@ type HashingManager struct {
 }
 
 func NewHashingManagerFromEnv() (*HashingManager, error) {
-	argon2idHasher, err := NewArgon2idHasherFromEnv()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Argon2id hasher: %w", err)
-	}
-
+	argon2idHasher := NewArgon2idHasherFromEnv()
 	bcryptHasher := NewBcryptHasherFromEnv()
 
 	return NewHashingManager(argon2idHasher, bcryptHasher)
@@ -32,7 +28,7 @@ func NewHashingManager(hasherList ...Hasher) (*HashingManager, error) {
 		hasherMap[hasher.Name()] = hasher
 	}
 
-	defaultHasherName := env.PasswordHashingAlgorithm
+	defaultHasherName := env.Variables.PasswordHashingAlgorithm
 	_, exists := hasherMap[defaultHasherName]
 	if !exists {
 		defaultHasherName = hasherList[0].Name()

@@ -14,7 +14,7 @@ variables defined in the env package. It returns a pointer to sqlx.DB and an
 error if any occurs during the connection process.
 */
 func NewDBFromEnv() (*sqlx.DB, error) {
-	switch env.DatabaseDriver {
+	switch env.Variables.DatabaseDriver {
 	case env.DatabaseDriverPostgreSQL:
 		return NewPostgreSQLDBFromEnv()
 
@@ -22,6 +22,6 @@ func NewDBFromEnv() (*sqlx.DB, error) {
 		return NewSQLiteDBFromEnv()
 
 	default:
-		return nil, fmt.Errorf("unsupported database type: %s", env.DatabaseDriver)
+		return nil, fmt.Errorf("unsupported database type: %s", env.Variables.DatabaseDriver)
 	}
 }

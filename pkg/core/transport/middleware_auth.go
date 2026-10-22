@@ -33,7 +33,7 @@ func (m *MiddlewareProvider) Auth() Middleware {
 			}
 
 			// Get session token from cookie
-			cookie, err := r.Cookie(env.SessionCookieName)
+			cookie, err := r.Cookie(env.Variables.SessionCookieName)
 			if err != nil {
 				// err is not nil only if the cookie is not present
 				m.responseHandler.WriteMessage(w, "Unauthorized", http.StatusUnauthorized)

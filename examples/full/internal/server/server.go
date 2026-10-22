@@ -21,9 +21,12 @@ import (
 )
 
 func MustNewServer(envFile string) *server.Server {
-	env.MustSetConstants(envFile)
+	err := env.SetVariables(envFile)
+	if err != nil {
+		panic(fmt.Errorf("failed to set constants: %w", err))
+	}
 
-	err := log.SetCustomLoggerFromEnv()
+	err = log.SetCustomLoggerFromEnv()
 	if err != nil {
 		panic(fmt.Errorf("failed to set custom logger: %w", err))
 	}
@@ -70,8 +73,8 @@ func MustNewServer(envFile string) *server.Server {
 		server.WithQueueManager(queueManager),
 		server.WithStaticSite("/", siteDir),
 		server.WithDefaultMiddleware(),
-		server.WithDefaultApiHandler(handler),
-		server.WithHttpServer(),
+		server.WithDefaultAPIHandler(handler),
+		server.WithHTTPServer(),
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create server: %w", err))

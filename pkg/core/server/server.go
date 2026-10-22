@@ -46,7 +46,7 @@ type Server struct {
 	apiMux                  *http.ServeMux
 	mux                     *http.ServeMux
 	apiMiddleware           transport.Middleware
-	port                    string
+	port                    int
 	socketPath              string
 	socketPerm              os.FileMode
 	httpServer              *http.Server
@@ -68,8 +68,8 @@ func NewServer(options ...Option) (*Server, error) {
 	}
 
 	socketPerm := DefaultSocketPerm
-	if env.SocketPath != "" {
-		if socketPerm, err = parseSocketPerm(env.SocketPerm); err != nil {
+	if env.Variables.SocketPath != "" {
+		if socketPerm, err = parseSocketPerm(env.Variables.SocketPerm); err != nil {
 			return nil, fmt.Errorf("failed to create server: %w", err)
 		}
 	}
@@ -87,12 +87,12 @@ func NewServer(options ...Option) (*Server, error) {
 	server := &Server{
 		runMigrations:           false,
 		runGostarterMigrations:  false,
-		port:                    env.Port,
-		socketPath:              env.SocketPath,
+		port:                    env.Variables.Port,
+		socketPath:              env.Variables.SocketPath,
 		socketPerm:              socketPerm,
 		apiMux:                  http.NewServeMux(),
 		mux:                     http.NewServeMux(),
-		gracefulShutdownTimeout: time.Duration(env.GracefulShutdownTimeoutSec) * time.Second,
+		gracefulShutdownTimeout: time.Duration(env.Variables.GracefulShutdownTimeoutSec) * time.Second,
 
 		idGenerator:     generator.NewULID,
 		usernameRegex:   usernameRegex,

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
@@ -158,7 +159,7 @@ func WithScheduler(jobList ...cron.Job) Option {
 	}
 }
 
-func WithPort(port string) Option {
+func WithPort(port int) Option {
 	return func(s *Server) error {
 		s.port = port
 		return nil
@@ -215,7 +216,7 @@ func WithMiddleware(middlewareList ...transport.Middleware) Option {
 	}
 }
 
-func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
+func WithDefaultAPIHandler(handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
 		endpointService := service.NewEndpointService(service.EndpointServiceConfig{
 			DB:             s.db,
@@ -227,11 +228,11 @@ func WithDefaultApiHandler(handlerList ...transport.Handler) Option {
 		})
 		endpointHandler := transport.NewEndpointHandler(endpointService, s.responseHandler, s.cookieGenerator)
 		handlerList = append([]transport.Handler{endpointHandler}, handlerList...)
-		return WithApiHandler("/api", handlerList...)(s)
+		return WithAPIHandler("/api", handlerList...)(s)
 	}
 }
 
-func WithApiHandler(subpath string, handlerList ...transport.Handler) Option {
+func WithAPIHandler(subpath string, handlerList ...transport.Handler) Option {
 	return func(s *Server) error {
 		for _, h := range handlerList {
 			h.RegisterRoutes(s.apiMux)
@@ -242,9 +243,9 @@ func WithApiHandler(subpath string, handlerList ...transport.Handler) Option {
 	}
 }
 
-func WithHttpServer() Option {
+func WithHTTPServer() Option {
 	return func(s *Server) error {
-		addr := ":" + s.port
+		addr := ":" + strconv.Itoa(s.port)
 		if s.socketPath != "" {
 			addr = s.socketPath
 		}

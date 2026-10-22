@@ -61,8 +61,8 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 	var jobList []Job
 
 	// Database backup job (only for SQLite)
-	if env.DatabaseDriver == env.DatabaseDriverSQLite {
-		if env.SQLiteBackupEnabled {
+	if env.Variables.DatabaseDriver == env.DatabaseDriverSQLite {
+		if env.Variables.SQLiteBackupEnabled {
 			job := SQLiteBackupJob(schedulerService)
 			jobList = append(jobList, job)
 		} else {
@@ -73,7 +73,7 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 	}
 
 	// Session cleanup job
-	if env.SessionCleanupEnabled {
+	if env.Variables.SessionCleanupEnabled {
 		job := SessionCleanupJob(schedulerService)
 		jobList = append(jobList, job)
 	} else {
@@ -84,7 +84,7 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 
 func SQLiteBackupJob(schedulerService *service.SchedulerService) Job {
 	return Job{
-		CronSchedule: env.SQLiteBackupCronSchedule,
+		CronSchedule: env.Variables.SQLiteBackupCronSchedule,
 		WithSeconds:  false,
 		Task: func(ctx context.Context) {
 			log.Info("Starting database backup")
@@ -103,7 +103,7 @@ func SQLiteBackupJob(schedulerService *service.SchedulerService) Job {
 
 func SessionCleanupJob(schedulerService *service.SchedulerService) Job {
 	return Job{
-		CronSchedule: env.SessionCleanupCronSchedule,
+		CronSchedule: env.Variables.SessionCleanupCronSchedule,
 		WithSeconds:  false,
 		Task: func(ctx context.Context) {
 			log.Info("Starting session cleanup")

@@ -23,10 +23,10 @@ type CookieGenerator struct {
 
 func NewCookieGeneratorFromEnv() *CookieGenerator {
 	return NewCookieGenerator(CookieGeneratorConfig{
-		Name:     env.SessionCookieName,
-		Secure:   env.SessionCookieSecure,
-		HttpOnly: env.SessionCookieHttpOnly,
-		SameSite: env.SessionCookieSameSite,
+		Name:     env.Variables.SessionCookieName,
+		Secure:   env.Variables.SessionCookieSecure,
+		HttpOnly: env.Variables.SessionCookieHTTPOnly,
+		SameSite: env.Variables.SessionCookieSameSite,
 	})
 }
 

@@ -14,14 +14,10 @@ import (
 SetCustomLoggerFromEnv sets a custom logger based on the log level defined in
 the environment variables. It uses the slog package to create a new logger with
 a custom handler that formats log messages with a timestamp, log level, and
-message. The log level is set based on the value of env.LogLevel.
+message. The log level is set based on the value of env.Constants.LogLevel.
 */
 func SetCustomLoggerFromEnv() error {
-	if !env.ConstantsSet {
-		return fmt.Errorf("environment variables not set, cannot set custom logger")
-	}
-
-	SetCustomLogger(env.LogLevel)
+	SetCustomLogger(env.Variables.LogLevel)
 
 	return nil
 }

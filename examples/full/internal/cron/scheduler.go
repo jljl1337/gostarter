@@ -12,7 +12,7 @@ import (
 
 func DeleteNotesJob(schedulerService *service.SchedulerService) cron.Job {
 	return cron.Job{
-		CronSchedule: env.DeleteNotesCronSchedule,
+		CronSchedule: env.Variables.DeleteNotesCronSchedule,
 		WithSeconds:  false,
 		Task: func(ctx context.Context) {
 			deleted, err := schedulerService.DeleteExpiredNotes(ctx)
