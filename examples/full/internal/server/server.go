@@ -73,8 +73,8 @@ func MustNewServer(envFile string) *server.Server {
 		server.WithQueueManager(queueManager),
 		server.WithStaticSite("/", siteDir),
 		server.WithDefaultMiddleware(),
-		server.WithDefaultApiHandler(handler),
-		server.WithHttpServer(),
+		server.WithDefaultAPIHandler(handler),
+		server.WithHTTPServer(),
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to create server: %w", err))
