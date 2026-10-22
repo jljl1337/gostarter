@@ -244,20 +244,49 @@ func TestGetString(t *testing.T) {
 	})
 }
 
+func TestScreamingSnakeCase(t *testing.T) {
+	tests := []struct {
+		name  string
+		field string
+		want  string
+	}{
+		{name: "single word", field: "Port", want: "PORT"},
+		{name: "camel case", field: "LiveDataDir", want: "LIVE_DATA_DIR"},
+		{name: "acronym before word", field: "HTTPServerURL", want: "HTTP_SERVER_URL"},
+		{name: "trailing acronym", field: "CORSOrigins", want: "CORS_ORIGINS"},
+		{name: "embedded acronym", field: "CSRFTokenLength", want: "CSRF_TOKEN_LENGTH"},
+		{name: "acronym suffix", field: "APIKey", want: "API_KEY"},
+		{name: "consecutive capitals", field: "UserID", want: "USER_ID"},
+		{name: "digit", field: "Int8", want: "INT8"},
+		{name: "digit boundary", field: "S3Bucket", want: "S3_BUCKET"},
+		{name: "already upper", field: "PORT", want: "PORT"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := screamingSnakeCase(test.field); got != test.want {
+				t.Errorf("expected %q, got %q", test.want, got)
+			}
+		})
+	}
+}
+
 func TestLoadIntoStruct(t *testing.T) {
 	type config struct {
-		Name    string `env:"GOSTARTER_TEST_LOAD_NAME"`
-		Port    int    `env:"GOSTARTER_TEST_LOAD_PORT" default:"8080"`
-		Debug   bool   `env:"GOSTARTER_TEST_LOAD_DEBUG" default:"true"`
-		Ignored string
-		hidden  string `env:"GOSTARTER_TEST_LOAD_HIDDEN"`
+		Name          string `env:"GOSTARTER_TEST_LOAD_NAME"`
+		Port          int    `env:"GOSTARTER_TEST_LOAD_PORT" default:"8080"`
+		Debug         bool   `env:"GOSTARTER_TEST_LOAD_DEBUG" default:"true"`
+		FieldNameOnly string
+		Timeout       int    `default:"5"`
+		hidden        string `env:"GOSTARTER_TEST_LOAD_HIDDEN"`
 	}
 
 	t.Run("populates fields from environment and defaults", func(t *testing.T) {
 		t.Setenv("GOSTARTER_TEST_LOAD_NAME", "example")
 		t.Setenv("GOSTARTER_TEST_LOAD_HIDDEN", "ignored")
+		t.Setenv("FIELD_NAME_ONLY", "from-field-name")
 
-		cfg := config{Ignored: "untouched"}
+		var cfg config
 
 		loader := &EnvLoader{}
 		if err := loader.LoadIntoStruct(&cfg); err != nil {
@@ -273,8 +302,11 @@ func TestLoadIntoStruct(t *testing.T) {
 		if !cfg.Debug {
 			t.Error("expected Debug to be true")
 		}
-		if cfg.Ignored != "untouched" {
-			t.Errorf("expected Ignored to be %q, got %q", "untouched", cfg.Ignored)
+		if cfg.FieldNameOnly != "from-field-name" {
+			t.Errorf("expected FieldNameOnly to be %q, got %q", "from-field-name", cfg.FieldNameOnly)
+		}
+		if cfg.Timeout != 5 {
+			t.Errorf("expected Timeout to be %d, got %d", 5, cfg.Timeout)
 		}
 		if cfg.hidden != "" {
 			t.Errorf("expected unexported field to be empty, got %q", cfg.hidden)

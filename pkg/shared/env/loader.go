@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/joho/godotenv"
 )
@@ -44,13 +45,13 @@ func (e *EnvLoader) LoadIntoStruct(target any) error {
 		typeField := structType.Field(i)
 		valueField := value.Field(i)
 
-		envKey, ok := typeField.Tag.Lookup("env")
-		if !ok {
-			// TODO: assume env key to be screaming snake case of field name
-			continue
-		}
 		if !valueField.CanSet() {
 			continue
+		}
+
+		envKey, ok := typeField.Tag.Lookup("env")
+		if !ok {
+			envKey = screamingSnakeCase(typeField.Name)
 		}
 
 		defaultValue, _ := typeField.Tag.Lookup("default")
@@ -65,6 +66,28 @@ func (e *EnvLoader) LoadIntoStruct(target any) error {
 	}
 
 	return nil
+}
+
+func screamingSnakeCase(name string) string {
+	runes := []rune(name)
+
+	var builder strings.Builder
+	builder.Grow(len(name) + 4)
+
+	for i, r := range runes {
+		if i > 0 && unicode.IsUpper(r) {
+			prev := runes[i-1]
+			nextIsLower := i+1 < len(runes) && unicode.IsLower(runes[i+1])
+
+			if unicode.IsLower(prev) || unicode.IsDigit(prev) || (unicode.IsUpper(prev) && nextIsLower) {
+				builder.WriteByte('_')
+			}
+		}
+
+		builder.WriteRune(unicode.ToUpper(r))
+	}
+
+	return builder.String()
 }
 
 func (e *EnvLoader) setField(field reflect.Value, value string) error {
