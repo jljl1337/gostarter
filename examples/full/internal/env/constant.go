@@ -18,7 +18,7 @@ var (
 )
 
 func MustSetConstants(files ...string) {
-	env.MustSetConstantsWithoutPrefix(files...)
+	env.MustSetConstants(files...)
 
 	DeleteNotesCronSchedule = env.MustGetString("DELETE_NOTES_CRON_SCHEDULE", "* * * * *")
 }

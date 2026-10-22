@@ -25,7 +25,7 @@ func NewCookieGeneratorFromEnv() *CookieGenerator {
 	return NewCookieGenerator(CookieGeneratorConfig{
 		Name:     env.SessionCookieName,
 		Secure:   env.SessionCookieSecure,
-		HttpOnly: env.SessionCookieHttpOnly,
+		HttpOnly: env.SessionCookieHTTPOnly,
 		SameSite: env.SessionCookieSameSite,
 	})
 }

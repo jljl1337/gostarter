@@ -31,7 +31,7 @@ var (
 	BackupDataDir               string
 	SQLiteDir                   string
 	SQLiteLiveFileName          string
-	SQLiteDbBusyTimeout         string
+	SQLiteBusyTimeout           string
 	SQLiteBackupEnabled         bool
 	SQLiteBackupCronSchedule    string
 	SQLiteBackupFileName        string
@@ -53,7 +53,7 @@ var (
 	PasswordArgon2idKeyLength   int
 	PasswordBcryptCost          int
 	SessionCookieName           string
-	SessionCookieHttpOnly       bool
+	SessionCookieHTTPOnly       bool
 	SessionCookieSecure         bool
 	SessionCookieSameSite       string
 	SessionTokenLength          int
@@ -65,62 +65,55 @@ var (
 	CSRFTokenCharset            string
 )
 
-func MustSetConstantsWithPrefix(files ...string) {
-	MustSetConstants(true, files...)
+func MustSetConstants(files ...string) {
+	MustSetConstantsWithPrefix("", files...)
 }
 
-func MustSetConstantsWithoutPrefix(files ...string) {
-	MustSetConstants(false, files...)
-}
-
-func MustSetConstants(addPrefix bool, files ...string) {
+func MustSetConstantsWithPrefix(prefix string, files ...string) {
 	MustLoadOptionalEnvFile(files...)
 
-	DatabaseDriver = MustGetString(prefix("DATABASE_DRIVER", addPrefix), DatabaseDriverSQLite)
-	DataDir = MustGetString(prefix("DATA_DIR", addPrefix), "data")
-	LiveDataDir = MustGetString(prefix("LIVE_DATA_DIR", addPrefix), "live")
-	BackupDataDir = MustGetString(prefix("BACKUP_DATA_DIR", addPrefix), "backup")
-	SQLiteDir = MustGetString(prefix("SQLITE_DIR", addPrefix), "db")
-	SQLiteLiveFileName = MustGetString(prefix("SQLITE_LIVE_FILE_NAME", addPrefix), "live.db")
-	SQLiteDbBusyTimeout = MustGetString(prefix("SQLITE_BUSY_TIMEOUT", addPrefix), "30000")
-	SQLiteBackupEnabled = MustGetBool(prefix("SQLITE_BACKUP_ENABLED", addPrefix), true)
-	SQLiteBackupCronSchedule = MustGetString(prefix("SQLITE_BACKUP_CRON_SCHEDULE", addPrefix), "0 0 * * *")
-	SQLiteBackupFileName = MustGetString(prefix("SQLITE_BACKUP_FILE_NAME", addPrefix), "backup.db")
-	PostgreSQLURL = MustGetString(prefix("POSTGRESQL_URL", addPrefix), "")
-	SessionCleanupEnabled = MustGetBool(prefix("SESSION_CLEANUP_ENABLED", addPrefix), true)
-	SessionCleanupCronSchedule = MustGetString(prefix("SESSION_CLEANUP_CRON_SCHEDULE", addPrefix), "0 0 * * 0")
-	LogLevel = MustGetInt(prefix("LOG_LEVEL", addPrefix), 0)
-	LogHealthCheck = MustGetBool(prefix("LOG_HEALTH_CHECK", addPrefix), false)
-	Port = MustGetString(prefix("PORT", addPrefix), "3000")
-	SocketPath = MustGetString(prefix("SOCKET_PATH", addPrefix), "")
-	SocketPerm = MustGetString(prefix("SOCKET_PERM", addPrefix), "0666")
-	GracefulShutdownTimeoutSec = MustGetInt(prefix("GRACEFUL_SHUTDOWN_TIMEOUT_SEC", addPrefix), 30)
-	CORSOrigins = MustGetString(prefix("CORS_ORIGINS", addPrefix), "*")
-	PasswordHashingAlgorithm = MustGetString(prefix("PASSWORD_HASHING_ALGORITHM", addPrefix), PasswordHashingAlgorithmArgon2id)
-	PasswordArgon2idMemory = MustGetInt(prefix("PASSWORD_ARGON2ID_MEMORY", addPrefix), 64*1024)
-	PasswordArgon2idIterations = MustGetInt(prefix("PASSWORD_ARGON2ID_ITERATIONS", addPrefix), 3)
-	PasswordArgon2idParallelism = MustGetInt(prefix("PASSWORD_ARGON2ID_PARALLELISM", addPrefix), 1)
-	PasswordArgon2idSaltLength = MustGetInt(prefix("PASSWORD_ARGON2ID_SALT_LENGTH", addPrefix), 16)
-	PasswordArgon2idKeyLength = MustGetInt(prefix("PASSWORD_ARGON2ID_KEY_LENGTH", addPrefix), 32)
-	PasswordBcryptCost = MustGetInt(prefix("PASSWORD_BCRYPT_COST", addPrefix), 12)
-	SessionCookieName = MustGetString(prefix("SESSION_COOKIE_NAME", addPrefix), "session_token")
-	SessionCookieHttpOnly = MustGetBool(prefix("SESSION_COOKIE_HTTP_ONLY", addPrefix), true)
-	SessionCookieSecure = MustGetBool(prefix("SESSION_COOKIE_SECURE", addPrefix), false)
-	SessionCookieSameSite = MustGetString(prefix("SESSION_COOKIE_SAME_SITE", addPrefix), "lax")
-	SessionTokenLength = MustGetInt(prefix("SESSION_TOKEN_LENGTH", addPrefix), 32)
-	SessionTokenCharset = MustGetString(prefix("SESSION_TOKEN_CHARSET", addPrefix), AlphaNumericCharset)
-	SessionLifetimeMin = MustGetInt(prefix("SESSION_LIFETIME_MIN", addPrefix), 60*24*7)
-	SessionRefreshThresholdMin = MustGetInt(prefix("SESSION_REFRESH_THRESHOLD_MIN", addPrefix), 60*24)
-	PreSessionLifetimeMin = MustGetInt(prefix("PRE_SESSION_LIFETIME_MIN", addPrefix), 15)
-	CSRFTokenLength = MustGetInt(prefix("CSRF_TOKEN_LENGTH", addPrefix), 32)
-	CSRFTokenCharset = MustGetString(prefix("CSRF_TOKEN_CHARSET", addPrefix), AlphaNumericCharset)
+	DatabaseDriver = MustGetString(addPrefix("DATABASE_DRIVER", prefix), DatabaseDriverSQLite)
+	DataDir = MustGetString(addPrefix("DATA_DIR", prefix), "data")
+	LiveDataDir = MustGetString(addPrefix("LIVE_DATA_DIR", prefix), "live")
+	BackupDataDir = MustGetString(addPrefix("BACKUP_DATA_DIR", prefix), "backup")
+	SQLiteDir = MustGetString(addPrefix("SQLITE_DIR", prefix), "db")
+	SQLiteLiveFileName = MustGetString(addPrefix("SQLITE_LIVE_FILE_NAME", prefix), "live.db")
+	SQLiteBusyTimeout = MustGetString(addPrefix("SQLITE_BUSY_TIMEOUT", prefix), "30000")
+	SQLiteBackupEnabled = MustGetBool(addPrefix("SQLITE_BACKUP_ENABLED", prefix), true)
+	SQLiteBackupCronSchedule = MustGetString(addPrefix("SQLITE_BACKUP_CRON_SCHEDULE", prefix), "0 0 * * *")
+	SQLiteBackupFileName = MustGetString(addPrefix("SQLITE_BACKUP_FILE_NAME", prefix), "backup.db")
+	PostgreSQLURL = MustGetString(addPrefix("POSTGRESQL_URL", prefix), "")
+	SessionCleanupEnabled = MustGetBool(addPrefix("SESSION_CLEANUP_ENABLED", prefix), true)
+	SessionCleanupCronSchedule = MustGetString(addPrefix("SESSION_CLEANUP_CRON_SCHEDULE", prefix), "0 0 * * 0")
+	LogLevel = MustGetInt(addPrefix("LOG_LEVEL", prefix), 0)
+	LogHealthCheck = MustGetBool(addPrefix("LOG_HEALTH_CHECK", prefix), false)
+	Port = MustGetString(addPrefix("PORT", prefix), "3000")
+	SocketPath = MustGetString(addPrefix("SOCKET_PATH", prefix), "")
+	SocketPerm = MustGetString(addPrefix("SOCKET_PERM", prefix), "0666")
+	GracefulShutdownTimeoutSec = MustGetInt(addPrefix("GRACEFUL_SHUTDOWN_TIMEOUT_SEC", prefix), 30)
+	CORSOrigins = MustGetString(addPrefix("CORS_ORIGINS", prefix), "*")
+	PasswordHashingAlgorithm = MustGetString(addPrefix("PASSWORD_HASHING_ALGORITHM", prefix), PasswordHashingAlgorithmArgon2id)
+	PasswordArgon2idMemory = MustGetInt(addPrefix("PASSWORD_ARGON2ID_MEMORY", prefix), 64*1024)
+	PasswordArgon2idIterations = MustGetInt(addPrefix("PASSWORD_ARGON2ID_ITERATIONS", prefix), 3)
+	PasswordArgon2idParallelism = MustGetInt(addPrefix("PASSWORD_ARGON2ID_PARALLELISM", prefix), 1)
+	PasswordArgon2idSaltLength = MustGetInt(addPrefix("PASSWORD_ARGON2ID_SALT_LENGTH", prefix), 16)
+	PasswordArgon2idKeyLength = MustGetInt(addPrefix("PASSWORD_ARGON2ID_KEY_LENGTH", prefix), 32)
+	PasswordBcryptCost = MustGetInt(addPrefix("PASSWORD_BCRYPT_COST", prefix), 12)
+	SessionCookieName = MustGetString(addPrefix("SESSION_COOKIE_NAME", prefix), "session_token")
+	SessionCookieHTTPOnly = MustGetBool(addPrefix("SESSION_COOKIE_HTTP_ONLY", prefix), true)
+	SessionCookieSecure = MustGetBool(addPrefix("SESSION_COOKIE_SECURE", prefix), false)
+	SessionCookieSameSite = MustGetString(addPrefix("SESSION_COOKIE_SAME_SITE", prefix), "lax")
+	SessionTokenLength = MustGetInt(addPrefix("SESSION_TOKEN_LENGTH", prefix), 32)
+	SessionTokenCharset = MustGetString(addPrefix("SESSION_TOKEN_CHARSET", prefix), AlphaNumericCharset)
+	SessionLifetimeMin = MustGetInt(addPrefix("SESSION_LIFETIME_MIN", prefix), 60*24*7)
+	SessionRefreshThresholdMin = MustGetInt(addPrefix("SESSION_REFRESH_THRESHOLD_MIN", prefix), 60*24)
+	PreSessionLifetimeMin = MustGetInt(addPrefix("PRE_SESSION_LIFETIME_MIN", prefix), 15)
+	CSRFTokenLength = MustGetInt(addPrefix("CSRF_TOKEN_LENGTH", prefix), 32)
+	CSRFTokenCharset = MustGetString(addPrefix("CSRF_TOKEN_CHARSET", prefix), AlphaNumericCharset)
 
 	ConstantsSet = true
 }
 
-func prefix(str string, add bool) string {
-	if add {
-		return "GOSTARTER_" + str
-	}
-	return str
+func addPrefix(str, prefix string) string {
+	return prefix + str
 }

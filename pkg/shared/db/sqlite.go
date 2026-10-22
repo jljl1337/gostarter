@@ -20,7 +20,7 @@ sqlx.DB and an error if any occurs during the connection process.
 */
 func NewSQLiteDBFromEnv() (*sqlx.DB, error) {
 	DBPath := filepath.Join(env.DataDir, env.LiveDataDir, env.SQLiteDir, env.SQLiteLiveFileName)
-	return NewSQLiteDB(DBPath, env.SQLiteDbBusyTimeout)
+	return NewSQLiteDB(DBPath, env.SQLiteBusyTimeout)
 }
 
 /*
