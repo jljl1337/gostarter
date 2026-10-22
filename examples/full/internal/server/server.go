@@ -21,7 +21,7 @@ import (
 )
 
 func MustNewServer(envFile string) *server.Server {
-	err := env.SetConstants(envFile)
+	err := env.SetVariables(envFile)
 	if err != nil {
 		panic(fmt.Errorf("failed to set constants: %w", err))
 	}

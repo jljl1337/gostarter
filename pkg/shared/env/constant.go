@@ -26,9 +26,7 @@ var (
 )
 
 // Variables loaded from environment variables
-var (
-	Variables Config
-)
+var Variables Config
 
 type Config struct {
 	DatabaseDriver              string `env:"DATABASE_DRIVER" default:"sqlite"`
@@ -71,11 +69,11 @@ type Config struct {
 	CSRFTokenCharset            string `env:"CSRF_TOKEN_CHARSET" default:"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"`
 }
 
-func SetConstants(files ...string) error {
-	return SetConstantsWithPrefix("", files...)
+func SetVariables(files ...string) error {
+	return SetVariablestantsWithPrefix("", files...)
 }
 
-func SetConstantsWithPrefix(prefix string, files ...string) error {
+func SetVariablestantsWithPrefix(prefix string, files ...string) error {
 	loader := &EnvLoader{Prefix: prefix}
 
 	err := loader.ReadOptionalEnvFiles(files...)

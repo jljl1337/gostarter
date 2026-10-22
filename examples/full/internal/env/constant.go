@@ -23,8 +23,8 @@ type Config struct {
 	DeleteNotesCronSchedule string `env:"DELETE_NOTES_CRON_SCHEDULE" default:"* * * * *"`
 }
 
-func SetConstants(files ...string) error {
-	err := env.SetConstants(files...)
+func SetVariables(files ...string) error {
+	err := env.SetVariables(files...)
 	if err != nil {
 		return fmt.Errorf("failed to set constants: %w", err)
 	}
