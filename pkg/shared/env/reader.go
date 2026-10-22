@@ -67,7 +67,7 @@ func (e *EnvReader) LoadIntoStruct(target any) error {
 		}
 
 		defaultValue, _ := typeField.Tag.Lookup("default")
-		envValue, err := e.GetString(envKey, defaultValue)
+		envValue, err := e.getString(envKey, defaultValue)
 		if err != nil {
 			return fmt.Errorf("error getting string value for key %s: %w", envKey, err)
 		}
@@ -107,67 +107,7 @@ func (e *EnvReader) setField(field reflect.Value, value string) error {
 	return nil
 }
 
-func (e *EnvReader) MustGetBool(key string, defaultValue bool) bool {
-	value, err := e.GetBool(key, defaultValue)
-	if err != nil {
-		panic(err)
-	}
-
-	return value
-}
-
-func (e *EnvReader) GetBool(key string, defaultValue bool) (bool, error) {
-	defaultStr := "false"
-	if defaultValue {
-		defaultStr = "true"
-	}
-
-	valueStr, err := e.GetString(key, defaultStr)
-	if err != nil {
-		return false, fmt.Errorf("error getting string value for key %s: %w", key, err)
-	}
-
-	boolValue, err := strconv.ParseBool(valueStr)
-	if err != nil {
-		return false, fmt.Errorf("error converting value %s to bool for key %s: %w", valueStr, key, err)
-	}
-
-	return boolValue, nil
-}
-
-func (e *EnvReader) MustGetInt(key string, defaultValue int) int {
-	value, err := e.GetInt(key, defaultValue)
-	if err != nil {
-		panic(err)
-	}
-
-	return value
-}
-
-func (e *EnvReader) GetInt(key string, defaultValue int) (int, error) {
-	valueStr, err := e.GetString(key, strconv.Itoa(defaultValue))
-	if err != nil {
-		return 0, fmt.Errorf("error getting string value for key %s: %w", key, err)
-	}
-
-	intValue, err := strconv.Atoi(valueStr)
-	if err != nil {
-		return 0, fmt.Errorf("error converting value %s to int for key %s: %w", valueStr, key, err)
-	}
-
-	return intValue, nil
-}
-
-func (e *EnvReader) MustGetString(key string, defaultValue string) string {
-	value, err := e.GetString(key, defaultValue)
-	if err != nil {
-		panic(err)
-	}
-
-	return value
-}
-
-func (e *EnvReader) GetString(key string, defaultValue string) (string, error) {
+func (e *EnvReader) getString(key string, defaultValue string) (string, error) {
 	if e.prefix != "" {
 		key = e.prefix + "_" + key
 		key = strings.ToUpper(key)
