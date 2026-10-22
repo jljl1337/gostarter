@@ -7,6 +7,9 @@ pnpm = "latest"
 [settings]
 lockfile = true
 
+[settings.task]
+output = "prefix"
+
 [tasks.setup]
 description = "Setup the project"
 run = [
@@ -60,7 +63,13 @@ run = [
 [tasks.test_all]
 description = "Run all tests"
 run = [
-  { tasks = ["e2e_test_full"] },
+  { tasks = ["e2e_test_full", "unit_test"] },
+]
+
+[tasks.unit_test]
+description = "Run unit tests"
+run = [
+  "go test ./... -coverprofile=coverage.out",
 ]
 
 [tasks.e2e_test_full]
