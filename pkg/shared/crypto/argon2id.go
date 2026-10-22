@@ -9,21 +9,8 @@ import (
 
 	"golang.org/x/crypto/argon2"
 
-	"github.com/jljl1337/gostarter/pkg/shared/conversion"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
-
-/*
-NewArgon2idHasherParams holds the parameters for creating a new
-Argon2idHasher with int values.
-*/
-type NewArgon2idHasherParams struct {
-	Memory      int
-	Iterations  int
-	Parallelism int
-	SaltLength  int
-	KeyLength   int
-}
 
 type Argon2idHasher struct {
 	memory      uint32
@@ -33,47 +20,14 @@ type Argon2idHasher struct {
 	keyLength   uint32
 }
 
-func NewArgon2idHasherFromEnv() (*Argon2idHasher, error) {
-	params := NewArgon2idHasherParams{
-		Memory:      env.Variables.PasswordArgon2idMemory,
-		Iterations:  env.Variables.PasswordArgon2idIterations,
-		Parallelism: env.Variables.PasswordArgon2idParallelism,
-		SaltLength:  env.Variables.PasswordArgon2idSaltLength,
-		KeyLength:   env.Variables.PasswordArgon2idKeyLength,
-	}
-
-	return NewArgon2idHasher(params)
-}
-
-func NewArgon2idHasher(params NewArgon2idHasherParams) (*Argon2idHasher, error) {
-	memory, err := conversion.IntToUint32(params.Memory)
-	if err != nil {
-		return nil, fmt.Errorf("invalid memory parameter: %d", params.Memory)
-	}
-	iterations, err := conversion.IntToUint32(params.Iterations)
-	if err != nil {
-		return nil, fmt.Errorf("invalid iterations parameter: %d", params.Iterations)
-	}
-	parallelism, err := conversion.IntToUint8(params.Parallelism)
-	if err != nil {
-		return nil, fmt.Errorf("invalid parallelism parameter: %d", params.Parallelism)
-	}
-	saltLength, err := conversion.IntToUint32(params.SaltLength)
-	if err != nil {
-		return nil, fmt.Errorf("invalid salt length parameter: %d", params.SaltLength)
-	}
-	keyLength, err := conversion.IntToUint32(params.KeyLength)
-	if err != nil {
-		return nil, fmt.Errorf("invalid key length parameter: %d", params.KeyLength)
-	}
-
+func NewArgon2idHasherFromEnv() *Argon2idHasher {
 	return &Argon2idHasher{
-		memory:      memory,
-		iterations:  iterations,
-		parallelism: parallelism,
-		saltLength:  saltLength,
-		keyLength:   keyLength,
-	}, nil
+		memory:      env.Variables.PasswordArgon2idMemory,
+		iterations:  env.Variables.PasswordArgon2idIterations,
+		parallelism: env.Variables.PasswordArgon2idParallelism,
+		saltLength:  env.Variables.PasswordArgon2idSaltLength,
+		keyLength:   env.Variables.PasswordArgon2idKeyLength,
+	}
 }
 
 func (h *Argon2idHasher) Name() string {

@@ -52,11 +52,11 @@ type Config struct {
 	GracefulShutdownTimeoutSec  int    `env:"GRACEFUL_SHUTDOWN_TIMEOUT_SEC" default:"30"`
 	CORSOrigins                 string `env:"CORS_ORIGINS" default:"*"`
 	PasswordHashingAlgorithm    string `env:"PASSWORD_HASHING_ALGORITHM" default:"argon2id"`
-	PasswordArgon2idMemory      int    `env:"PASSWORD_ARGON2ID_MEMORY" default:"65536"`
-	PasswordArgon2idIterations  int    `env:"PASSWORD_ARGON2ID_ITERATIONS" default:"3"`
-	PasswordArgon2idParallelism int    `env:"PASSWORD_ARGON2ID_PARALLELISM" default:"1"`
-	PasswordArgon2idSaltLength  int    `env:"PASSWORD_ARGON2ID_SALT_LENGTH" default:"16"`
-	PasswordArgon2idKeyLength   int    `env:"PASSWORD_ARGON2ID_KEY_LENGTH" default:"32"`
+	PasswordArgon2idMemory      uint32 `env:"PASSWORD_ARGON2ID_MEMORY" default:"65536"`
+	PasswordArgon2idIterations  uint32 `env:"PASSWORD_ARGON2ID_ITERATIONS" default:"3"`
+	PasswordArgon2idParallelism uint8  `env:"PASSWORD_ARGON2ID_PARALLELISM" default:"1"`
+	PasswordArgon2idSaltLength  uint32 `env:"PASSWORD_ARGON2ID_SALT_LENGTH" default:"16"`
+	PasswordArgon2idKeyLength   uint32 `env:"PASSWORD_ARGON2ID_KEY_LENGTH" default:"32"`
 	PasswordBcryptCost          int    `env:"PASSWORD_BCRYPT_COST" default:"12"`
 	SessionCookieName           string `env:"SESSION_COOKIE_NAME" default:"session_token"`
 	SessionCookieHTTPOnly       bool   `env:"SESSION_COOKIE_HTTP_ONLY" default:"true"`
