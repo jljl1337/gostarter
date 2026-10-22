@@ -10,25 +10,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type EnvReader struct {
-	prefix string
+type EnvLoader struct {
+	Prefix string
 }
 
-// SetPrefix sets the prefix for environment variables. It allows you to
-// specify a prefix that will be used when looking up environment variables.
-// For example, if you set the prefix to "MYAPP", then the environment variable
-// "MYAPP_DATABASE_URL" will be read instead of just "DATABASE_URL".
-func (e *EnvReader) SetPrefix(prefix string) {
-	e.prefix = prefix
-}
-
-func (e *EnvReader) MustLoadOptionalEnvFiles(files ...string) {
-	if err := e.LoadOptionalEnvFiles(files...); err != nil {
-		panic(err)
-	}
-}
-
-func (e *EnvReader) LoadOptionalEnvFiles(files ...string) error {
+func (e *EnvLoader) ReadOptionalEnvFiles(files ...string) error {
 	// It's okay if the .env file doesn't exist, we can still proceed
 	if err := godotenv.Load(files...); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("error loading .env files: %w", err)
@@ -37,11 +23,11 @@ func (e *EnvReader) LoadOptionalEnvFiles(files ...string) error {
 	return nil
 }
 
-func (e *EnvReader) LoadEnvFiles(files ...string) error {
+func (e *EnvLoader) ReadEnvFiles(files ...string) error {
 	return godotenv.Load(files...)
 }
 
-func (e *EnvReader) LoadIntoStruct(target any) error {
+func (e *EnvLoader) LoadIntoStruct(target any) error {
 	pointer := reflect.ValueOf(target)
 	if pointer.Kind() != reflect.Pointer || pointer.IsNil() {
 		return fmt.Errorf("expected non-nil pointer to struct, got %T", target)
@@ -67,7 +53,7 @@ func (e *EnvReader) LoadIntoStruct(target any) error {
 		}
 
 		defaultValue, _ := typeField.Tag.Lookup("default")
-		envValue, err := e.getString(envKey, defaultValue)
+		envValue, err := e.GetString(envKey, defaultValue)
 		if err != nil {
 			return fmt.Errorf("error getting string value for key %s: %w", envKey, err)
 		}
@@ -80,7 +66,7 @@ func (e *EnvReader) LoadIntoStruct(target any) error {
 	return nil
 }
 
-func (e *EnvReader) setField(field reflect.Value, value string) error {
+func (e *EnvLoader) setField(field reflect.Value, value string) error {
 	switch field.Kind() {
 
 	case reflect.String:
@@ -107,9 +93,9 @@ func (e *EnvReader) setField(field reflect.Value, value string) error {
 	return nil
 }
 
-func (e *EnvReader) getString(key string, defaultValue string) (string, error) {
-	if e.prefix != "" {
-		key = e.prefix + "_" + key
+func (e *EnvLoader) GetString(key string, defaultValue string) (string, error) {
+	if e.Prefix != "" {
+		key = e.Prefix + "_" + key
 		key = strings.ToUpper(key)
 	}
 
