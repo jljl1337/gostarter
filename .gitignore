@@ -38,5 +38,5 @@ data
 .DS_Store
 
 # Temporary files
-tmp
-temp
+*tmp*
+*temp*
