@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
@@ -158,7 +159,7 @@ func WithScheduler(jobList ...cron.Job) Option {
 	}
 }
 
-func WithPort(port string) Option {
+func WithPort(port int) Option {
 	return func(s *Server) error {
 		s.port = port
 		return nil
@@ -244,7 +245,7 @@ func WithAPIHandler(subpath string, handlerList ...transport.Handler) Option {
 
 func WithHTTPServer() Option {
 	return func(s *Server) error {
-		addr := ":" + s.port
+		addr := ":" + strconv.Itoa(s.port)
 		if s.socketPath != "" {
 			addr = s.socketPath
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
@@ -20,7 +21,7 @@ sqlx.DB and an error if any occurs during the connection process.
 */
 func NewSQLiteDBFromEnv() (*sqlx.DB, error) {
 	DBPath := filepath.Join(env.Variables.DataDir, env.Variables.LiveDataDir, env.Variables.SQLiteDir, env.Variables.SQLiteLiveFileName)
-	return NewSQLiteDB(DBPath, env.Variables.SQLiteBusyTimeout)
+	return NewSQLiteDB(DBPath, env.Variables.SQLiteBusyTimeoutMs)
 }
 
 /*
@@ -28,7 +29,7 @@ NewSQLiteDB creates a new SQLite database connection using the provided
 path and busy timeout. It returns a pointer to sqlx.DB and an error if any
 occurs during the connection process.
 */
-func NewSQLiteDB(path, busyTimeout string) (*sqlx.DB, error) {
+func NewSQLiteDB(path string, busyTimeout int) (*sqlx.DB, error) {
 	// Create parent directories if they don't exist
 	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func NewSQLiteDB(path, busyTimeout string) (*sqlx.DB, error) {
 	dsn = dsn + "?_journal=WAL"
 	dsn = dsn + "&_foreign_keys=true"
 	dsn = dsn + "&_txlock=immediate"
-	dsn = dsn + "&_busy_timeout=" + busyTimeout
+	dsn = dsn + "&_busy_timeout=" + strconv.Itoa(busyTimeout)
 	return sqlx.Open("sqlite3", dsn)
 }
 

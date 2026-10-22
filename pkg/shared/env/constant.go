@@ -37,7 +37,7 @@ type Config struct {
 	BackupDataDir               string `env:"BACKUP_DATA_DIR" default:"backup"`
 	SQLiteDir                   string `env:"SQLITE_DIR" default:"db"`
 	SQLiteLiveFileName          string `env:"SQLITE_LIVE_FILE_NAME" default:"live.db"`
-	SQLiteBusyTimeout           string `env:"SQLITE_BUSY_TIMEOUT" default:"30000"`
+	SQLiteBusyTimeoutMs         int    `env:"SQLITE_BUSY_TIMEOUT_MS" default:"30000"`
 	SQLiteBackupEnabled         bool   `env:"SQLITE_BACKUP_ENABLED" default:"true"`
 	SQLiteBackupCronSchedule    string `env:"SQLITE_BACKUP_CRON_SCHEDULE" default:"0 0 * * *"`
 	SQLiteBackupFileName        string `env:"SQLITE_BACKUP_FILE_NAME" default:"backup.db"`
@@ -46,7 +46,7 @@ type Config struct {
 	SessionCleanupCronSchedule  string `env:"SESSION_CLEANUP_CRON_SCHEDULE" default:"0 0 * * 0"`
 	LogLevel                    int    `env:"LOG_LEVEL" default:"0"`
 	LogHealthCheck              bool   `env:"LOG_HEALTH_CHECK" default:"false"`
-	Port                        string `env:"PORT" default:"3000"`
+	Port                        int    `env:"PORT" default:"3000"`
 	SocketPath                  string `env:"SOCKET_PATH" default:""`
 	SocketPerm                  string `env:"SOCKET_PERM" default:"0666"`
 	GracefulShutdownTimeoutSec  int    `env:"GRACEFUL_SHUTDOWN_TIMEOUT_SEC" default:"30"`

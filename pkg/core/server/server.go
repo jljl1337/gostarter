@@ -46,7 +46,7 @@ type Server struct {
 	apiMux                  *http.ServeMux
 	mux                     *http.ServeMux
 	apiMiddleware           transport.Middleware
-	port                    string
+	port                    int
 	socketPath              string
 	socketPerm              os.FileMode
 	httpServer              *http.Server
