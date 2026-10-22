@@ -1,6 +1,7 @@
 package env
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -16,7 +17,7 @@ type EnvLoader struct {
 
 func (e *EnvLoader) ReadOptionalEnvFiles(files ...string) error {
 	// It's okay if the .env file doesn't exist, we can still proceed
-	if err := godotenv.Load(files...); err != nil && !os.IsNotExist(err) {
+	if err := godotenv.Load(files...); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("error loading .env files: %w", err)
 	}
 

@@ -76,12 +76,13 @@ func SetConstants(files ...string) error {
 }
 
 func SetConstantsWithPrefix(prefix string, files ...string) error {
-	err := LoadOptionalEnvFile(files...)
+	loader := &EnvLoader{Prefix: prefix}
+
+	err := loader.ReadOptionalEnvFiles(files...)
 	if err != nil {
 		return fmt.Errorf("failed to load env files: %w", err)
 	}
 
-	loader := &EnvLoader{Prefix: prefix}
 	if err := loader.LoadIntoStruct(&Variables); err != nil {
 		return fmt.Errorf("failed to load env variables into struct: %w", err)
 	}
