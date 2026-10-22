@@ -300,6 +300,44 @@ func TestLoadIntoStruct(t *testing.T) {
 		}
 	})
 
+	t.Run("populates numeric types from defaults", func(t *testing.T) {
+		type numericConfig struct {
+			Int8       int8       `env:"GOSTARTER_TEST_LOAD_INT8" default:"-8"`
+			Int16      int16      `env:"GOSTARTER_TEST_LOAD_INT16" default:"-16"`
+			Int32      int32      `env:"GOSTARTER_TEST_LOAD_INT32" default:"-32"`
+			Int64      int64      `env:"GOSTARTER_TEST_LOAD_INT64" default:"-64"`
+			Uint       uint       `env:"GOSTARTER_TEST_LOAD_UINT" default:"1"`
+			Uint8      uint8      `env:"GOSTARTER_TEST_LOAD_UINT8" default:"8"`
+			Uint16     uint16     `env:"GOSTARTER_TEST_LOAD_UINT16" default:"16"`
+			Uint32     uint32     `env:"GOSTARTER_TEST_LOAD_UINT32" default:"32"`
+			Uint64     uint64     `env:"GOSTARTER_TEST_LOAD_UINT64" default:"64"`
+			Uintptr    uintptr    `env:"GOSTARTER_TEST_LOAD_UINTPTR" default:"10"`
+			Float32    float32    `env:"GOSTARTER_TEST_LOAD_FLOAT32" default:"1.5"`
+			Float64    float64    `env:"GOSTARTER_TEST_LOAD_FLOAT64" default:"-2.5"`
+			Complex64  complex64  `env:"GOSTARTER_TEST_LOAD_COMPLEX64" default:"1+2i"`
+			Complex128 complex128 `env:"GOSTARTER_TEST_LOAD_COMPLEX128" default:"3+4i"`
+		}
+
+		var cfg numericConfig
+		loader := &EnvLoader{}
+		if err := loader.LoadIntoStruct(&cfg); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if cfg.Int8 != -8 || cfg.Int16 != -16 || cfg.Int32 != -32 || cfg.Int64 != -64 {
+			t.Errorf("unexpected signed ints: %+v", cfg)
+		}
+		if cfg.Uint != 1 || cfg.Uint8 != 8 || cfg.Uint16 != 16 || cfg.Uint32 != 32 || cfg.Uint64 != 64 || cfg.Uintptr != 10 {
+			t.Errorf("unexpected unsigned ints: %+v", cfg)
+		}
+		if cfg.Float32 != 1.5 || cfg.Float64 != -2.5 {
+			t.Errorf("unexpected floats: %+v", cfg)
+		}
+		if cfg.Complex64 != 1+2i || cfg.Complex128 != 3+4i {
+			t.Errorf("unexpected complex numbers: %+v", cfg)
+		}
+	})
+
 	t.Run("returns error for unsupported field type", func(t *testing.T) {
 		type unsupported struct {
 			Values []string `env:"GOSTARTER_TEST_LOAD_UNSUPPORTED"`
@@ -393,6 +431,146 @@ func TestSetField(t *testing.T) {
 			},
 		},
 		{
+			name:  "int8",
+			typ:   reflect.TypeOf(int8(0)),
+			value: "-12",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Int(); got != -12 {
+					t.Errorf("expected %d, got %d", -12, got)
+				}
+			},
+		},
+		{
+			name:  "int16",
+			typ:   reflect.TypeOf(int16(0)),
+			value: "-1234",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Int(); got != -1234 {
+					t.Errorf("expected %d, got %d", -1234, got)
+				}
+			},
+		},
+		{
+			name:  "int32",
+			typ:   reflect.TypeOf(int32(0)),
+			value: "123456",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Int(); got != 123456 {
+					t.Errorf("expected %d, got %d", 123456, got)
+				}
+			},
+		},
+		{
+			name:  "int64",
+			typ:   reflect.TypeOf(int64(0)),
+			value: "-1234567890",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Int(); got != -1234567890 {
+					t.Errorf("expected %d, got %d", -1234567890, got)
+				}
+			},
+		},
+		{
+			name:  "uint",
+			typ:   reflect.TypeOf(uint(0)),
+			value: "42",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Uint(); got != 42 {
+					t.Errorf("expected %d, got %d", 42, got)
+				}
+			},
+		},
+		{
+			name:  "uint8",
+			typ:   reflect.TypeOf(uint8(0)),
+			value: "255",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Uint(); got != 255 {
+					t.Errorf("expected %d, got %d", 255, got)
+				}
+			},
+		},
+		{
+			name:  "uint16",
+			typ:   reflect.TypeOf(uint16(0)),
+			value: "65535",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Uint(); got != 65535 {
+					t.Errorf("expected %d, got %d", 65535, got)
+				}
+			},
+		},
+		{
+			name:  "uint32",
+			typ:   reflect.TypeOf(uint32(0)),
+			value: "4294967295",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Uint(); got != 4294967295 {
+					t.Errorf("expected %d, got %d", 4294967295, got)
+				}
+			},
+		},
+		{
+			name:  "uint64",
+			typ:   reflect.TypeOf(uint64(0)),
+			value: "123456789",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Uint(); got != 123456789 {
+					t.Errorf("expected %d, got %d", 123456789, got)
+				}
+			},
+		},
+		{
+			name:  "uintptr",
+			typ:   reflect.TypeOf(uintptr(0)),
+			value: "42",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Uint(); got != 42 {
+					t.Errorf("expected %d, got %d", 42, got)
+				}
+			},
+		},
+		{
+			name:  "float32",
+			typ:   reflect.TypeOf(float32(0)),
+			value: "3.5",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Float(); got != 3.5 {
+					t.Errorf("expected %v, got %v", 3.5, got)
+				}
+			},
+		},
+		{
+			name:  "float64",
+			typ:   reflect.TypeOf(float64(0)),
+			value: "-1.25",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Float(); got != -1.25 {
+					t.Errorf("expected %v, got %v", -1.25, got)
+				}
+			},
+		},
+		{
+			name:  "complex64",
+			typ:   reflect.TypeOf(complex64(0)),
+			value: "1+2i",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Complex(); got != 1+2i {
+					t.Errorf("expected %v, got %v", 1+2i, got)
+				}
+			},
+		},
+		{
+			name:  "complex128",
+			typ:   reflect.TypeOf(complex128(0)),
+			value: "-3.5+4.25i",
+			check: func(t *testing.T, field reflect.Value) {
+				if got := field.Complex(); got != -3.5+4.25i {
+					t.Errorf("expected %v, got %v", -3.5+4.25i, got)
+				}
+			},
+		},
+		{
 			name:  "bool",
 			typ:   reflect.TypeOf(false),
 			value: "true",
@@ -420,6 +598,19 @@ func TestSetField(t *testing.T) {
 		value string
 	}{
 		{name: "invalid int", typ: reflect.TypeOf(int(0)), value: "abc"},
+		{name: "int8 overflow", typ: reflect.TypeOf(int8(0)), value: "128"},
+		{name: "int16 overflow", typ: reflect.TypeOf(int16(0)), value: "32768"},
+		{name: "int32 overflow", typ: reflect.TypeOf(int32(0)), value: "2147483648"},
+		{name: "negative uint", typ: reflect.TypeOf(uint(0)), value: "-1"},
+		{name: "uint8 overflow", typ: reflect.TypeOf(uint8(0)), value: "256"},
+		{name: "uint16 overflow", typ: reflect.TypeOf(uint16(0)), value: "65536"},
+		{name: "uint32 overflow", typ: reflect.TypeOf(uint32(0)), value: "4294967296"},
+		{name: "invalid uint", typ: reflect.TypeOf(uint64(0)), value: "abc"},
+		{name: "invalid uintptr", typ: reflect.TypeOf(uintptr(0)), value: "abc"},
+		{name: "invalid float32", typ: reflect.TypeOf(float32(0)), value: "abc"},
+		{name: "invalid float64", typ: reflect.TypeOf(float64(0)), value: "abc"},
+		{name: "invalid complex64", typ: reflect.TypeOf(complex64(0)), value: "1+"},
+		{name: "invalid complex128", typ: reflect.TypeOf(complex128(0)), value: "1+"},
 		{name: "invalid bool", typ: reflect.TypeOf(false), value: "maybe"},
 		{name: "unsupported type", typ: reflect.TypeOf([]string{}), value: "value"},
 	}

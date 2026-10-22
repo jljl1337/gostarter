@@ -72,12 +72,33 @@ func (e *EnvLoader) setField(field reflect.Value, value string) error {
 	case reflect.String:
 		field.SetString(value)
 
-	case reflect.Int:
-		n, err := strconv.ParseInt(value, 10, 0)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		n, err := strconv.ParseInt(value, 10, field.Type().Bits())
 		if err != nil {
-			return fmt.Errorf("invalid int %q: %w", value, err)
+			return fmt.Errorf("invalid %s %q: %w", field.Kind(), value, err)
 		}
 		field.SetInt(n)
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		n, err := strconv.ParseUint(value, 10, field.Type().Bits())
+		if err != nil {
+			return fmt.Errorf("invalid %s %q: %w", field.Kind(), value, err)
+		}
+		field.SetUint(n)
+
+	case reflect.Float32, reflect.Float64:
+		n, err := strconv.ParseFloat(value, field.Type().Bits())
+		if err != nil {
+			return fmt.Errorf("invalid %s %q: %w", field.Kind(), value, err)
+		}
+		field.SetFloat(n)
+
+	case reflect.Complex64, reflect.Complex128:
+		n, err := strconv.ParseComplex(value, field.Type().Bits())
+		if err != nil {
+			return fmt.Errorf("invalid %s %q: %w", field.Kind(), value, err)
+		}
+		field.SetComplex(n)
 
 	case reflect.Bool:
 		b, err := strconv.ParseBool(value)
