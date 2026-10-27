@@ -11,16 +11,16 @@ import (
 
 	"github.com/jljl1337/gostarter/pkg/core/cron"
 	"github.com/jljl1337/gostarter/pkg/core/queue"
+	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/role"
-	"github.com/jmoiron/sqlx"
 )
 
 type Option func(*Server) error
 
-func WithDB(db *sqlx.DB) Option {
+func WithDB(db *repository.Database) Option {
 	return func(s *Server) error {
 		if db == nil {
 			return fmt.Errorf("database connection cannot be nil")

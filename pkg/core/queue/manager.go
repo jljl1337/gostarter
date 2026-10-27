@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jmoiron/sqlx"
-
+	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
@@ -29,11 +28,11 @@ type laneState struct {
 	wake chan struct{}
 }
 
-func NewDefaultQueueManager(db *sqlx.DB, laneList ...Lane) *QueueManager {
+func NewDefaultQueueManager(db *repository.Database, laneList ...Lane) *QueueManager {
 	return NewQueueManagerWithSQLRepo(db, generator.NewULID, laneList...)
 }
 
-func NewQueueManagerWithSQLRepo(db *sqlx.DB, newID func() string, laneList ...Lane) *QueueManager {
+func NewQueueManagerWithSQLRepo(db *repository.Database, newID func() string, laneList ...Lane) *QueueManager {
 	repo := NewSQLTaskRepository(db)
 	return NewQueueManager(repo, newID, laneList...)
 }

@@ -1,38 +1,28 @@
-package db
+package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 )
 
-/*
-NewSQLiteDBFromEnv creates a new SQLite database connection using the
-environment variables defined in the env package. It returns a pointer to
-sqlx.DB and an error if any occurs during the connection process.
-*/
-func NewSQLiteDBFromEnv() (*sqlx.DB, error) {
+func NewSQLiteDBFromEnv() (*Database, error) {
 	DBPath := filepath.Join(env.Variables.DataDir, env.Variables.LiveDataDir, env.Variables.SQLiteDir, env.Variables.SQLiteLiveFileName)
 	return NewSQLiteDB(DBPath, env.Variables.SQLiteBusyTimeoutMs)
 }
 
-/*
-NewSQLiteDB creates a new SQLite database connection using the provided
-path and busy timeout. It returns a pointer to sqlx.DB and an error if any
-occurs during the connection process.
-*/
-func NewSQLiteDB(path string, busyTimeout int) (*sqlx.DB, error) {
+func NewSQLiteDB(path string, busyTimeout int) (*Database, error) {
 	// Create parent directories if they don't exist
 	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create directories for SQLite database: %w", err)
 	}
 
 	dsn := "file:" + path
@@ -40,40 +30,48 @@ func NewSQLiteDB(path string, busyTimeout int) (*sqlx.DB, error) {
 	dsn = dsn + "&_foreign_keys=true"
 	dsn = dsn + "&_txlock=immediate"
 	dsn = dsn + "&_busy_timeout=" + strconv.Itoa(busyTimeout)
-	return sqlx.Open("sqlite3", dsn)
+	db, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open SQLite database: %w", err)
+	}
+
+	return &Database{
+		DB:        db,
+		VarSyntax: QuestionMark,
+	}, nil
 }
 
-func BackupSQLiteDBFromEnv(srcDB *sqlx.DB) error {
+func BackupSQLiteDBFromEnv(ctx context.Context, srcDB *Database) error {
 	backupPath := filepath.Join(env.Variables.DataDir, env.Variables.BackupDataDir, env.Variables.SQLiteDir, env.Variables.SQLiteBackupFileName)
-	return BackupSQLiteDB(srcDB, backupPath)
+	return BackupSQLiteDB(ctx, srcDB.DB, backupPath)
 }
 
-func BackupSQLiteDB(srcDB *sqlx.DB, backupPath string) error {
+func BackupSQLiteDB(ctx context.Context, srcDB *sql.DB, backupPath string) error {
 	// Create parent directories if they don't exist
 	if err := os.MkdirAll(filepath.Dir(backupPath), os.ModePerm); err != nil {
-		return err
+		return fmt.Errorf("failed to create directories for backup SQLite database: %w", err)
 	}
 
 	// Open destination database
-	dstDB, err := sqlx.Open("sqlite3", backupPath)
+	dstDB, err := sql.Open("sqlite3", backupPath)
 	if err != nil {
 		return fmt.Errorf("failed to open backup database: %w", err)
 	}
 	defer dstDB.Close()
 
 	// Perform backup
-	return backupSQLiteDB(dstDB, srcDB)
+	return backupSQLiteDB(ctx, dstDB, srcDB)
 }
 
-func backupSQLiteDB(dstDB, srcDB *sqlx.DB) error {
+func backupSQLiteDB(ctx context.Context, dstDB, srcDB *sql.DB) error {
 	// Get raw connections
-	destConn, err := dstDB.Conn(context.Background())
+	destConn, err := dstDB.Conn(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get destination connection: %w", err)
 	}
 	defer destConn.Close()
 
-	srcConn, err := srcDB.Conn(context.Background())
+	srcConn, err := srcDB.Conn(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get source connection: %w", err)
 	}

@@ -3,8 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
-
+	gsRepository "github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 
@@ -12,23 +11,21 @@ import (
 )
 
 type SchedulerService struct {
-	db *sqlx.DB
+	db *gsRepository.Database
 }
 
-func NewSchedulerService(db *sqlx.DB) *SchedulerService {
+func NewSchedulerService(db *gsRepository.Database) *SchedulerService {
 	return &SchedulerService{
 		db: db,
 	}
 }
 
 func (s *SchedulerService) DeleteExpiredNotes(ctx context.Context) (int64, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, rollback, commit, err := repository.NewQueriesTx(ctx, s.db, nil)
 	if err != nil {
-		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
+		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries with transaction: %w", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer rollback()
 
 	deadline := generator.MinutesBeforeNowISO8601(1)
 	deleted, err := queries.DeleteNotesByUpdatedAt(ctx, deadline)
@@ -36,7 +33,7 @@ func (s *SchedulerService) DeleteExpiredNotes(ctx context.Context) (int64, error
 		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to delete expired notes: %w", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := commit(); err != nil {
 		return 0, service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 

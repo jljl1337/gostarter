@@ -6,16 +6,13 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
-
 	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
 )
 
 // Migrate runs the [MigrateContext] with a background context.
-func Migrate(db *sqlx.DB, runGostarterMigration bool, appMigrationFS fs.FS) error {
+func Migrate(db *repository.Database, runGostarterMigration bool, appMigrationFS fs.FS) error {
 	return MigrateContext(context.Background(), db, runGostarterMigration, appMigrationFS)
 }
 
@@ -25,14 +22,12 @@ state of the database and the embedded migration files. The embedded migrations
 are loaded from both the gostarter package and the appMigrationFS in the
 parameter.
 */
-func MigrateContext(ctx context.Context, db *sqlx.DB, runGostarterMigration bool, appMigrationFS fs.FS) error {
-	tx, err := db.BeginTxx(ctx, nil)
+func MigrateContext(ctx context.Context, db *repository.Database, runGostarterMigration bool, appMigrationFS fs.FS) error {
+	queries, rollback, commit, err := repository.NewQueriesTx(ctx, db, nil)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return fmt.Errorf("failed to create queries with transaction: %w", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer rollback()
 
 	// Create the migrations table if it doesn't exist
 	err = queries.CreateMigrationTable(ctx)
@@ -77,7 +72,7 @@ func MigrateContext(ctx context.Context, db *sqlx.DB, runGostarterMigration bool
 	}
 
 	// Commit the transaction
-	if err := tx.Commit(); err != nil {
+	if err := commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

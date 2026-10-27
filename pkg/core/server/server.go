@@ -15,11 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/jljl1337/gostarter/pkg/core/cron"
 	"github.com/jljl1337/gostarter/pkg/core/migration"
 	"github.com/jljl1337/gostarter/pkg/core/queue"
+	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/core/transport"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
@@ -37,7 +36,7 @@ const (
 )
 
 type Server struct {
-	db                      *sqlx.DB
+	db                      *repository.Database
 	runMigrations           bool
 	runGostarterMigrations  bool
 	appMigrationFS          fs.FS

@@ -61,7 +61,7 @@ func DefaultSchedulerJobFromEnv(schedulerService *service.SchedulerService) []Jo
 	var jobList []Job
 
 	// Database backup job (only for SQLite)
-	if env.Variables.DatabaseDriver == env.DatabaseDriverSQLite {
+	if env.Variables.DatabaseEngine == env.DatabaseDriverSQLite {
 		if env.Variables.SQLiteBackupEnabled {
 			job := SQLiteBackupJob(schedulerService)
 			jobList = append(jobList, job)
