@@ -199,12 +199,12 @@ func (q *Queryer) SelectContext(ctx context.Context, dest any, query string) err
 	return sqlx.SelectContext(ctx, q.db, dest, query)
 }
 
-// ExecContext executes a query without arguments and returns a [sql.Result]
+// ExecContext is a wrapper around [sql.DB.ExecContext] without arguments.
 func (q *Queryer) ExecContext(ctx context.Context, query string) (sql.Result, error) {
 	return q.db.ExecContext(ctx, query)
 }
 
-// QueryContext executes a query without arguments and returns a [*sql.Rows].
+// QueryContext is a wrapper around [sql.DB.QueryContext] without arguments.
 func (q *Queryer) QueryContext(ctx context.Context, query string) (*sql.Rows, error) {
 	return q.db.QueryContext(ctx, query)
 }
