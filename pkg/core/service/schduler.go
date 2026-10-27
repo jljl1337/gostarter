@@ -4,33 +4,29 @@ import (
 	"context"
 
 	"github.com/jljl1337/gostarter/pkg/core/repository"
-	"github.com/jljl1337/gostarter/pkg/shared/db"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
-	"github.com/jmoiron/sqlx"
 )
 
 type SchedulerService struct {
-	db *sqlx.DB
+	db *repository.Database
 }
 
-func NewSchedulerService(db *sqlx.DB) *SchedulerService {
+func NewSchedulerService(db *repository.Database) *SchedulerService {
 	return &SchedulerService{
 		db: db,
 	}
 }
 
 func (s *SchedulerService) BackupSQLiteDBFromEnv(ctx context.Context) error {
-	return db.BackupSQLiteDBFromEnv(s.db)
+	return repository.BackupSQLiteDBFromEnv(ctx, s.db)
 }
 
 func (s *SchedulerService) CleanupExpiredSessions(ctx context.Context) (int64, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, rollback, commit, err := repository.NewQueriesTx(ctx, s.db, nil)
 	if err != nil {
-		return 0, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %w", err)
+		return 0, NewServiceErrorf(ErrCodeInternal, "failed to create queries with transaction: %w", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer rollback()
 
 	now := generator.NowISO8601()
 	deleted, err := queries.DeleteSessionByExpiresAt(ctx, now)
@@ -38,7 +34,7 @@ func (s *SchedulerService) CleanupExpiredSessions(ctx context.Context) (int64, e
 		return 0, NewServiceErrorf(ErrCodeInternal, "failed to delete expired sessions: %w", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := commit(); err != nil {
 		return 0, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 

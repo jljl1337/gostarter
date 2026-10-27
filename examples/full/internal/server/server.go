@@ -5,9 +5,9 @@ import (
 	"io/fs"
 
 	"github.com/jljl1337/gostarter/pkg/core/queue"
+	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/core/server"
 	gsTransport "github.com/jljl1337/gostarter/pkg/core/transport"
-	"github.com/jljl1337/gostarter/pkg/shared/db"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 	"github.com/jljl1337/gostarter/pkg/shared/log"
 	"github.com/jljl1337/gostarter/pkg/shared/role"
@@ -31,7 +31,7 @@ func MustNewServer(envFile string) *server.Server {
 		panic(fmt.Errorf("failed to set custom logger: %w", err))
 	}
 
-	db, err := db.NewDBFromEnv()
+	db, err := repository.NewDatabaseFromEnv()
 	if err != nil {
 		panic(fmt.Errorf("failed to create database connection: %w", err))
 	}

@@ -5,9 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/jljl1337/gostarter/pkg/core/queue"
+	gsRepository "github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/core/service"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
 
@@ -16,10 +15,10 @@ import (
 )
 
 type QueueService struct {
-	db *sqlx.DB
+	db *gsRepository.Database
 }
 
-func NewQueueService(db *sqlx.DB) *QueueService {
+func NewQueueService(db *gsRepository.Database) *QueueService {
 	return &QueueService{
 		db: db,
 	}
@@ -42,13 +41,11 @@ func (s *QueueService) UpdateNotePositivity(payload string) error {
 
 	ctx := context.Background()
 
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, rollback, commit, err := repository.NewQueriesTx(ctx, s.db, nil)
 	if err != nil {
-		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to begin transaction: %w", err)
+		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to create queries with transaction: %w", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer rollback()
 
 	notes, err := queries.GetNoteByID(ctx, payload)
 	if err != nil {
@@ -87,7 +84,7 @@ func (s *QueueService) UpdateNotePositivity(payload string) error {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to update note positivity by ID: %w", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := commit(); err != nil {
 		return service.NewServiceErrorf(service.ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 

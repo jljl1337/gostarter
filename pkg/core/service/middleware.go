@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/format"
@@ -13,23 +11,21 @@ import (
 )
 
 type MiddlewareService struct {
-	db *sqlx.DB
+	db *repository.Database
 }
 
-func NewMiddlewareService(db *sqlx.DB) *MiddlewareService {
+func NewMiddlewareService(db *repository.Database) *MiddlewareService {
 	return &MiddlewareService{
 		db: db,
 	}
 }
 
 func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Context, sessionToken, CSRFToken string) (*repository.Account, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+	queries, rollback, commit, err := repository.NewQueriesTx(ctx, s.db, nil)
 	if err != nil {
-		return nil, NewServiceErrorf(ErrCodeInternal, "failed to begin transaction: %w", err)
+		return nil, NewServiceErrorf(ErrCodeInternal, "failed to create queries with transaction: %w", err)
 	}
-	defer tx.Rollback()
-
-	queries := repository.NewQueries(tx)
+	defer rollback()
 
 	sessions, err := queries.GetSessionByToken(ctx, sessionToken)
 
@@ -89,7 +85,7 @@ func (s *MiddlewareService) GetSessionAccountAndRefreshSession(ctx context.Conte
 		return nil, NewServiceErrorf(ErrCodeInternal, "failed to get account by ID: %w", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := commit(); err != nil {
 		return nil, NewServiceErrorf(ErrCodeInternal, "failed to commit transaction: %w", err)
 	}
 

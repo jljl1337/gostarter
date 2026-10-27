@@ -29,7 +29,7 @@ var (
 var Variables Config
 
 type Config struct {
-	DatabaseDriver              string `env:"DATABASE_DRIVER" default:"sqlite"`
+	DatabaseEngine              string `env:"DATABASE_ENGINE" default:"sqlite"`
 	DataDir                     string `env:"DATA_DIR" default:"data"`
 	LiveDataDir                 string `env:"LIVE_DATA_DIR" default:"live"`
 	BackupDataDir               string `env:"BACKUP_DATA_DIR" default:"backup"`

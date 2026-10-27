@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/env"
 	"github.com/jljl1337/gostarter/pkg/shared/generator"
@@ -33,17 +31,21 @@ type TaskRepository interface {
 }
 
 type SQLTaskRepository struct {
-	db *sqlx.DB
+	db *repository.Database
 }
 
-func NewSQLTaskRepository(db *sqlx.DB) TaskRepository {
+func NewSQLTaskRepository(db *repository.Database) TaskRepository {
 	return &SQLTaskRepository{db: db}
 }
 
 // TODO: use transaction in all methods
 
 func (r *SQLTaskRepository) PendingLanes(ctx context.Context) ([]string, error) {
-	queries := repository.NewQueries(r.db)
+	queries, err := repository.NewQueries(r.db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create queries with transaction: %w", err)
+	}
+
 	lanes, err := queries.GetLanesByStatus(ctx, env.QueueTaskStatusPending)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pending lanes: %w", err)
@@ -53,8 +55,12 @@ func (r *SQLTaskRepository) PendingLanes(ctx context.Context) ([]string, error) 
 }
 
 func (r *SQLTaskRepository) ResetRunningTasks(ctx context.Context) error {
-	queries := repository.NewQueries(r.db)
-	_, err := queries.UpdateQueueTaskStatusByStatus(ctx, repository.UpdateQueueTaskStatusByStatusParams{
+	queries, err := repository.NewQueries(r.db)
+	if err != nil {
+		return fmt.Errorf("failed to create queries with transaction: %w", err)
+	}
+
+	_, err = queries.UpdateQueueTaskStatusByStatus(ctx, repository.UpdateQueueTaskStatusByStatusParams{
 		OldStatus: env.QueueTaskStatusRunning,
 		NewStatus: env.QueueTaskStatusPending,
 		UpdatedAt: generator.NowISO8601(),
@@ -65,9 +71,13 @@ func (r *SQLTaskRepository) ResetRunningTasks(ctx context.Context) error {
 
 	return nil
 }
+
 func (r *SQLTaskRepository) InsertIfNotInQueue(ctx context.Context, t Task) error {
 	now := generator.NowISO8601()
-	queries := repository.NewQueries(r.db)
+	queries, err := repository.NewQueries(r.db)
+	if err != nil {
+		return fmt.Errorf("failed to create queries with transaction: %w", err)
+	}
 
 	existingTasks, err := queries.GetLaneTaskByPayloadStatus(ctx, repository.GetLaneTaskByPayloadStatusParams{
 		Lane:    t.Lane,
@@ -97,7 +107,11 @@ func (r *SQLTaskRepository) InsertIfNotInQueue(ctx context.Context, t Task) erro
 }
 
 func (r *SQLTaskRepository) Dequeue(ctx context.Context, lane string) (Task, bool, error) {
-	queries := repository.NewQueries(r.db)
+	queries, err := repository.NewQueries(r.db)
+	if err != nil {
+		return Task{}, false, fmt.Errorf("failed to create queries with transaction: %w", err)
+	}
+
 	tasks, err := queries.GetFirstTaskInLane(ctx, repository.GetFirstTaskInLaneParams{
 		Lane:   lane,
 		Status: env.QueueTaskStatusPending,
@@ -132,8 +146,12 @@ func (r *SQLTaskRepository) UpdateTaskStatus(ctx context.Context, taskID string,
 		status = env.QueueTaskStatusSucceeded
 	}
 
-	queries := repository.NewQueries(r.db)
-	err := queries.UpdateQueueTaskStatusByID(ctx, repository.UpdateQueueTaskStatusByIDParams{
+	queries, err := repository.NewQueries(r.db)
+	if err != nil {
+		return fmt.Errorf("failed to create queries with transaction: %w", err)
+	}
+
+	err = queries.UpdateQueueTaskStatusByID(ctx, repository.UpdateQueueTaskStatusByIDParams{
 		ID:        taskID,
 		Status:    status,
 		UpdatedAt: generator.NowISO8601(),

@@ -4,102 +4,144 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"reflect"
 
 	"github.com/jmoiron/sqlx"
 )
 
-/*
-Queries is a struct extends [Queryer] and provides methods to execute
-predefined queries.
-
-Use this struct when you are using any predefined queries.
-*/
 type Queries struct {
 	Queryer
 }
 
-/*
-NewQueries creates a new Queries instance with the provided database
-connection. It returns a pointer to Queries.
-*/
-func NewQueries(db sqlx.ExtContext) *Queries {
-	return &Queries{
-		Queryer: *NewQueryer(db),
+func NewQueriesTx(ctx context.Context, db *Database, opts *sql.TxOptions) (*Queries, func(), func() error, error) {
+	queryer, rollback, commit, err := NewQueryerTx(ctx, db, opts)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to create queryer with transaction: %w", err)
 	}
+
+	queries := &Queries{
+		Queryer: *queryer,
+	}
+
+	return queries, rollback, commit, nil
 }
 
-/*
-Queryer is a struct that holds the database connection and provides basic
-methods to execute queries.
+func NewQueries(db *Database) (*Queries, error) {
+	queryer, err := NewQueryer(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create queryer: %w", err)
+	}
 
-Use this struct when you are not using any predefined queries.
-*/
+	queries := &Queries{
+		Queryer: *queryer,
+	}
+
+	return queries, nil
+}
+
+// Queryer holds database connection(s) and provides basic methods to execute
+// queries.
 type Queryer struct {
 	db sqlx.ExtContext
 }
 
-/*
-NewQueryer creates a new Queryer instance with the provided database
-connection. It returns a pointer to Queryer.
-*/
-func NewQueryer(db sqlx.ExtContext) *Queryer {
-	return &Queryer{db: db}
-}
-
-func (q *Queryer) NamedGetContext(ctx context.Context, dest any, query string, arg any) error {
-	return q.selectOneContext(ctx, dest, func(ctx context.Context, results any) error {
-		return q.NamedSelectContext(ctx, results, query, arg)
-	})
-}
-
-func (q *Queryer) GetContext(ctx context.Context, dest any, query string, args ...any) error {
-	return q.selectOneContext(ctx, dest, func(ctx context.Context, results any) error {
-		return q.SelectContext(ctx, results, query, args...)
-	})
-}
-
-func (q *Queryer) selectOneContext(ctx context.Context, dest any, selectFn func(context.Context, any) error) error {
-	// dest must be a non-nil pointer
-	destVal := reflect.ValueOf(dest)
-	if destVal.Kind() != reflect.Pointer || destVal.IsNil() {
-		return fmt.Errorf("dest must be a non-nil pointer")
-	}
-
-	// Select into a slice of the same element type as dest to count rows
-	sliceType := reflect.SliceOf(destVal.Elem().Type())
-	resultsPtr := reflect.New(sliceType)
-
-	if err := selectFn(ctx, resultsPtr.Interface()); err != nil {
-		return err
-	}
-
-	results := resultsPtr.Elem()
-	if results.Len() != 1 {
-		return fmt.Errorf("expected to select 1 row, selected %d rows", results.Len())
-	}
-
-	// Copy the single result into dest
-	destVal.Elem().Set(results.Index(0))
-	return nil
-}
-
-func (q *Queryer) NamedSelectContext(ctx context.Context, dest any, query string, arg any) error {
-	query, args, err := q.db.BindNamed(query, arg)
+// NewQueryerTx creates a new [Queryer] instance with a transaction. It returns
+// a [*Queryer], a rollback function, a commit function, and an error if any.
+//
+// The rollback function should be called in a defer statement to ensure that
+// the transaction is rolled back if an error occurs. The commit function
+// should be called to commit the transaction if all operations succeed.
+func NewQueryerTx(ctx context.Context, db *Database, opts *sql.TxOptions) (*Queryer, func(), func() error, error) {
+	sqlxDB, err := convertDB(db)
 	if err != nil {
-		return err
+		return nil, nil, nil, fmt.Errorf("failed to convert database: %w", err)
 	}
-	return q.SelectContext(ctx, dest, query, args...)
+
+	tx, err := sqlxDB.BeginTxx(ctx, opts)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	rollback := func() {
+		tx.Rollback()
+	}
+	commit := tx.Commit
+
+	queryer := &Queryer{
+		db: tx,
+	}
+
+	return queryer, rollback, commit, nil
 }
 
-func (q *Queryer) SelectContext(ctx context.Context, dest any, query string, args ...any) error {
+// NewQueryer creates a new Queryer instance with the provided database
+// connection. It returns a pointer to Queryer and an error if any.
+func NewQueryer(db *Database) (*Queryer, error) {
+	sqlxDB, err := convertDB(db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert database: %w", err)
+	}
+
+	return &Queryer{
+		db: sqlxDB,
+	}, nil
+}
+
+func convertDB(db *Database) (*sqlx.DB, error) {
+	var sqlxDriverName string
+
+	switch db.VarSyntax {
+	case DollarSign:
+		sqlxDriverName = "postgres"
+	case QuestionMark:
+		sqlxDriverName = "sqlite3"
+	case ColonNamed:
+		sqlxDriverName = "oci8"
+	case AtSign:
+		sqlxDriverName = "sqlserver"
+	default:
+		return nil, fmt.Errorf("unsupported variable syntax: %s", db.VarSyntax)
+	}
+
+	return sqlx.NewDb(db.DB, sqlxDriverName), nil
+}
+
+// NamedGetContext calls [Queryer.Named] to bind the named parameters in the
+// query string with the provided argument, and then calls
+// [sqlx.GetContext] to execute the query and scan the result into the
+// destination struct.
+//
+// If the query returns no rows, it returns a [sql.ErrNoRows] error. This
+// method is best used for queries that always return exactly one row, such as
+// aggregation queries.
+func (q *Queryer) NamedGetContext(ctx context.Context, dest any, query string, arg any) error {
+	query, args, err := q.Named(query, arg)
+	if err != nil {
+		return fmt.Errorf("failed to bind named query: %w", err)
+	}
+
+	return sqlx.GetContext(ctx, q.db, dest, query, args...)
+}
+
+// NamedSelectContext calls [Queryer.Named] to bind the named parameters in
+// the query string with the provided argument, and then calls
+// [sqlx.SelectContext] to execute the query and scan the results into the
+// destination slice.
+func (q *Queryer) NamedSelectContext(ctx context.Context, dest any, query string, arg any) error {
+	query, args, err := q.Named(query, arg)
+	if err != nil {
+		return fmt.Errorf("failed to bind named query: %w", err)
+	}
+
 	return sqlx.SelectContext(ctx, q.db, dest, query, args...)
 }
 
+// NamedExecOneRowContext binds the named parameters in the query string with
+// the provided argument using [Queryer.Named], executes the query, and checks
+// that exactly one row was affected. If not, it returns an error.
 func (q *Queryer) NamedExecOneRowContext(ctx context.Context, query string, arg any) error {
 	rows, err := q.NamedExecRowsAffectedContext(ctx, query, arg)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to execute query: %w", err)
 	}
 
 	if rows != 1 {
@@ -109,26 +151,60 @@ func (q *Queryer) NamedExecOneRowContext(ctx context.Context, query string, arg 
 	return nil
 }
 
+// NamedExecRowsAffectedContext binds the named parameters in the query string
+// with the provided argument using [Queryer.Named], executes the query, and
+// returns the number of rows affected as an [int64].
 func (q *Queryer) NamedExecRowsAffectedContext(ctx context.Context, query string, arg any) (int64, error) {
-	query, args, err := q.db.BindNamed(query, arg)
+	query, args, err := q.Named(query, arg)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to bind named query: %w", err)
 	}
-	result, err := q.ExecContext(ctx, query, args...)
+
+	result, err := q.db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to execute query: %w", err)
 	}
+
 	return result.RowsAffected()
 }
 
-func (q *Queryer) ExecRowsAffectedContext(ctx context.Context, query string, args ...any) (int64, error) {
-	result, err := q.ExecContext(ctx, query, args...)
+// Named binds the named parameters in the query string with the provided
+// argument, and returns the resulting query string and arguments slice. It also
+// calls [sqlx.In] to expand any slice arguments in the query string.
+func (q *Queryer) Named(query string, arg any) (string, []any, error) {
+	query, args, err := sqlx.Named(query, arg)
 	if err != nil {
-		return 0, err
+		return "", nil, fmt.Errorf("failed to bind named query: %w", err)
 	}
-	return result.RowsAffected()
+
+	query, args, err = sqlx.In(query, args...)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to bind in query: %w", err)
+	}
+
+	return q.db.Rebind(query), args, nil
 }
 
-func (q *Queryer) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	return q.db.ExecContext(ctx, query, args...)
+// GetContext is a wrapper around [sqlx.GetContext] without arguments.
+//
+// If the query returns no rows, it returns an [sql.ErrNoRows] error. This is
+// best used for queries that must return exactly one row, such as aggregation
+// queries.
+func (q *Queryer) GetContext(ctx context.Context, dest any, query string) error {
+	return sqlx.GetContext(ctx, q.db, dest, query)
+}
+
+// SelectContext is a wrapper around [sqlx.SelectContext] without arguments.
+func (q *Queryer) SelectContext(ctx context.Context, dest any, query string) error {
+	return sqlx.SelectContext(ctx, q.db, dest, query)
+}
+
+// ExecContext is a wrapper around [sql.DB.ExecContext] without arguments.
+func (q *Queryer) ExecContext(ctx context.Context, query string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, query)
+}
+
+// QueryContext is a wrapper around [sql.DB.QueryContext] without arguments.
+func (q *Queryer) QueryContext(ctx context.Context, query string) (*sql.Rows, error) {
+	return q.db.QueryContext(ctx, query)
 }

@@ -3,14 +3,13 @@ package service
 import (
 	"regexp"
 
-	"github.com/jmoiron/sqlx"
-
+	"github.com/jljl1337/gostarter/pkg/core/repository"
 	"github.com/jljl1337/gostarter/pkg/shared/crypto"
 	"github.com/jljl1337/gostarter/pkg/shared/role"
 )
 
 type EndpointServiceConfig struct {
-	DB             *sqlx.DB
+	DB             *repository.Database
 	IDGenerator    func() string
 	UsernameRegex  *regexp.Regexp
 	PasswordRegex  *regexp.Regexp
@@ -19,7 +18,7 @@ type EndpointServiceConfig struct {
 }
 
 type EndpointService struct {
-	db             *sqlx.DB
+	db             *repository.Database
 	idGenerator    func() string
 	usernameRegex  *regexp.Regexp
 	passwordRegex  *regexp.Regexp
